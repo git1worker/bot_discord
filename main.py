@@ -272,7 +272,6 @@ async def get_info_warnings(ctx, arg):  # Команда get_info_warnings Вы�
     except:
         await ctx.send("Произошла ошибка")
 
-
 """
 
 -----RUN-----
