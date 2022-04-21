@@ -8,7 +8,7 @@ intents = discord.Intents.all()
 intents.members = True
 
 client = commands.Bot(command_prefix="$", intents=intents)
-# DiscordComponents(client)
+
 
 flag = False
 list_warnings = []
