@@ -361,7 +361,6 @@ async def on_member_join(member):  # Когда человек заходит н
             await member.add_roles(intellegence)
         if member_bd2[1] == 5:  # Проверка из базы данных на роль
             await member.add_roles(stalin)
-
         await member.send(f"С возвращением {member.name}, роли были восстановлены"
                           f" но доверие ты потерял")  # Бот пишет в лс  !!!!!!!
 
