@@ -350,7 +350,7 @@ async def on_member_join(member):  # Когда человек заходит н
                         = 61 WHERE id_discord = {member.id}""")
         conn.commit()
         member_bd2 = cursor.fetchone()
-        # print(member_bd2[1])
+        # print(member_bd2[1]
         if member_bd2[1] == 1:  # Проверка из базы данных на роль
             await member.add_roles(minor)
         if member_bd2[1] == 2:  # Проверка из базы данных на роль
