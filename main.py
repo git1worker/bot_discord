@@ -87,13 +87,12 @@ async def check_main_roles(member_bd, member):  # Проверка на выда
                 if role in m_r:
                     await member.remove_roles(role)
             await member.add_roles(zymerok)
-    # elif f1 > 0 or f2 > 20:
-    #     # print(6)
-    #     if no_name not in m_r:
-    #         for role in main_roles:
-    #             if role in m_r:
-    #                 await member.remove_roles(role)
-    #         await member.add_roles(no_name)
+    else:
+        if (no_name and who_im) not in m_r:
+            for role in main_roles:
+                if role in m_r:
+                    await member.remove_roles(role)
+            await member.add_roles(no_name)
     # print("Третья часть: ", time.time() - t)
 
 
@@ -132,7 +131,7 @@ async def timer_messages(num_messages_in_2_sec):
     global list_warnings
     flag = True
 
-    await asyncio.sleep(3)
+    await asyncio.sleep(2)
     # t = time.time()
     for k, v in messages.items():
         user = guild.get_member(k)
@@ -205,31 +204,37 @@ async def timer_halfmin():  # Таймер на каждую минуту
             if admin in member.roles:
                 admins.append(member.id)
             # print(member.id)
-            if member.voice != None and member.voice.channel != guild.get_channel(
-                    948653240512286760
-            ):  # Если участник в войсе и не в пивнушке
-                cursor.execute(  # Счет времени в войсе
-                    f"""UPDATE dis_users SET time_on_voice = {member_bd[3] + 0.166} WHERE id_discord = {member.id}"""
-                )
-                conn.commit()
-                cursor.execute(
-                    f"""UPDATE dis_users SET time_afk = 0 WHERE id_discord = {member.id}"""
-                )  # Обнуление счетчика афк
-                conn.commit()
-
+            cursor.execute(
+                f"""UPDATE dis_users SET time_afk = {member_bd[5] + 0.166} WHERE id_discord = {member.id}"""
+            )
+            conn.commit()
+            try:
+                if member.voice is not None and member.voice.channel != guild.get_channel(
+                        948653240512286760
+                ):  # Если участник в войсе и не в пивнушке
+                    cursor.execute(  # Счет времени в войсе
+                        f"""UPDATE dis_users SET time_on_voice = {member_bd[3] + 0.166} WHERE id_discord = {member.id}"""
+                    )
+                    conn.commit()
+                    cursor.execute(
+                        f"""UPDATE dis_users SET time_afk = 0 WHERE id_discord = {member.id}"""
+                    )  # Обнуление счетчика афк
+                    conn.commit()
+            except:
+                pass
             # print("Первая часть: ", time.time())
             if nash_chel in member.roles:
                 for role in trust_roles:
                     if role in member.roles:
                         await member.remove_roles(role)
-            if member_bd[3] > 4200 and nash_chel not in member.roles:
+            elif member_bd[3] > 4200 and nash_chel not in member.roles:
                 if civilian not in member.roles:
                     for role in trust_roles:
                         if role in member.roles:
                             await member.remove_roles(role)
                     await member.add_roles(civilian)
             elif (member_bd[3] > 600
-                  or member_bd[2] > 350) and civilian not in member.roles:
+                  or member_bd[2] > 350) and (civilian or nash_chel) not in member.roles:
                 if plebey not in member.roles:
                     for role in trust_roles:
                         if role in member.roles:
@@ -237,7 +242,7 @@ async def timer_halfmin():  # Таймер на каждую минуту
                     await member.add_roles(plebey)
             elif (member_bd[3] > 0
                   or member_bd[2] > 20) and (civilian
-                                             or plebey) not in member.roles:
+                                             or plebey or nash_chel) not in member.roles:
                 if dont_bot not in member.roles:
                     await member.add_roles(dont_bot)
             # print("Вторая часть: ", time.time() - t2)
@@ -261,10 +266,7 @@ async def timer_halfmin():  # Таймер на каждую минуту
             elif member_bd[5] > 25200:  # Если афк больше 400 часов трупачек
                 await member.add_roles(dead)
 
-            cursor.execute(
-                f"""UPDATE dis_users SET time_afk = {member_bd[5] + 0.166} WHERE id_discord = {member.id}"""
-            )
-            conn.commit()
+            
             # print("Обход участников:", time.time()-t2)
         cursor.execute(
             f"""SELECT * FROM dis_users WHERE time_after_leaving > 0 """
@@ -467,7 +469,7 @@ async def on_member_join(member):  # Когда человек заходит н
                               '0', '0', '0', '0')"""
                        )  # нулевая роль это доверительная кто я
         conn.commit()  # Сохранение изменений в бд
-        await member.send(f"Welcome {member.name}")  # Бот пишет в лс  !!!!!!
+        
 
     else:  # Если человек найден в бд
         cursor.execute(f"""UPDATE dis_users SET time_after_leaving 
@@ -522,7 +524,7 @@ async def on_raw_reaction_add(reaction):
     # message = reaction.message_id
     # message = await chann.fetch_message(message)
     # await message.add_reaction(reaction.emoji)
-    print(reaction.emoji)
+    
     if reaction.message_id == 968958987561226240:
         if str(reaction.emoji) == "✅" and who_im in reaction.member.roles:
             await reaction.member.add_roles(no_name)
