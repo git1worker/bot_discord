@@ -88,7 +88,7 @@ async def check_main_roles(member_bd, member):  # Проверка на выда
                     await member.remove_roles(role)
             await member.add_roles(zymerok)
     else:
-        if (no_name and who_im) not in m_r:
+        if (no_name or who_im) not in m_r:
             for role in main_roles:
                 if role in m_r:
                     await member.remove_roles(role)
@@ -131,7 +131,7 @@ async def timer_messages(num_messages_in_2_sec):
     global list_warnings
     flag = True
 
-    await asyncio.sleep(2)
+    await asyncio.sleep(10)
     # t = time.time()
     for k, v in messages.items():
         user = guild.get_member(k)
@@ -798,7 +798,7 @@ async def on_message(message):
             await message.delete()
         else:
             if not flag:
-                await timer_messages(1)
+                await timer_messages(5)
 
     
 
