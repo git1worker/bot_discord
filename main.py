@@ -10,11 +10,14 @@ intents.bans = True
 client = commands.Bot(command_prefix="$", intents=intents)
 
 flag = False
+
 list_warnings = []
 # authors_messages = []
 messages = {}
+
 my_secret = os.environ['Token']
 admins = []
+links_warn = []
 from flask import Flask
 from threading import Thread
 
@@ -36,15 +39,15 @@ def keep_alive():
     t = Thread(target=run)
     t.start()
 
+keep_alive()
 
-links_warn = []
 """
 
 -----START-----
 
 """
 
-keep_alive()
+
 async def check_main_roles(member_bd, member):  # Проверка на выдачу ролей
     f1 = int(member_bd[3])
     f2 = member_bd[2]
@@ -102,12 +105,13 @@ def member_messenger(id):  # Подсчет сообщений
         messages[id] = messages[id] + 1
     else:
         messages[id] = 1
+    
     # print(messages)
 
 
 async def antispam(k):  # Вызов предупреждения по спаму
-    # if k in admins:
-    #     return
+    if k in admins:
+        return
     cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {k}""")
     num = cursor.fetchone()
     num = int(num[4]) + 1
@@ -147,22 +151,6 @@ async def timer_messages(num_messages_in_2_sec):
         conn.commit()
         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {k}""")
         num = cursor.fetchone()
-        # if num[2] + v > 200 and int(num[1]) == 2:
-        #     # Если человек написал больше 200 сообщений и звание сержант выдается роль майор
-        #     # cursor.execute(f"""UPDATE dis_users SET role = 2 WHERE id_discord = {k}""")
-        #     # user = guild.get_member(k)
-        #     # await user.remove_roles(sergeant)  # Удаление сержанта
-        #     # await user.add_roles(major)  # Добавление майора
-        #     # await text_chann.send(f"{user.name} повышен до {sergeant.name}")
-        #     pass
-        # if num[2] + v > 100 and int(num[1]) == 1:
-        #     # Если человек написал больше 100 сообщений и звание новобранец выдается роль сержант
-        #     # cursor.execute(f"""UPDATE dis_users SET role = 2 WHERE id_discord = {k}""")
-        #     # user = guild.get_member(k)
-        #     # await user.remove_roles(recruit)  # Удаление новобранца
-        #     # await user.add_roles(sergeant)  # Добавление сержанта
-        #     # await text_chann.send(f"{user.name} повышен до {sergeant.name}")
-        #     pass
         cursor.execute(
             f"""UPDATE dis_users SET num_mess = {num[2] + v} WHERE id_discord = {k}"""
         )
@@ -182,15 +170,7 @@ async def timer_messages(num_messages_in_2_sec):
 async def timer_halfmin():  # Таймер на каждую минуту
     # global authors_messages
     while True:
-        # for i in authors_messages:
-        #     cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {i}""")
-        #     num = cursor.fetchone()
-        #
-        #     cursor.execute(f"""UPDATE dis_users SET chat_time
-        #                 = {num[7] + 1} WHERE id_discord = {i}""")  # Счет времени в chat
-        #     conn.commit()
-        # authors_messages = []
-        # print("new")
+
         t1 = time.time()
         members = guild.members
         for member in members:
@@ -249,19 +229,23 @@ async def timer_halfmin():  # Таймер на каждую минуту
             await check_main_roles(member_bd, member)
 
             if dead in member.roles and member_bd[
-                    5] < 10080:  # Удаление роли трупа если число афк меньше недели
+                    5] < 25200:  # Удаление роли трупа если число афк меньше недели
                 member.remove_roles(dead)
 
             if member_bd[
-                    5] > 25440 and member.id not in admins:  # Если афк больше 424 часов кик
-                await member.send(f'''Ещё не запылился?
-Ты был **Исключён** из сервера " :banana: **Men of Cum - Redux** :milk:" за **Не активность** на **Сервере!**
-Если ты захочешь **Вернуться** к нам на **Сервер**, то советую поторопиться ...
-Все твои **Роли** скоро **Исчезнут**, да да...
-*У тебя Неделя, Дружок* :innocent:
-
-:arrow_right: {await general.create_invite(max_uses = 1)} :arrow_left:'''
-                                  )  # !!!!!
+                    5] > 26640 and member.id not in admins:  # Если афк больше 424 часов кик
+                try:
+                    
+                    await member.send(f'''Ещё не запылился?
+    Ты был **Исключён** из сервера " :banana: **Men of Cum - Redux** :milk:" за **Не активность** на **Сервере!**
+    Если ты захочешь **Вернуться** к нам на **Сервер**, то советую поторопиться ...
+    Все твои **Роли** скоро **Исчезнут**, да да...
+    *У тебя Неделя, Дружок* :innocent:
+    
+    :arrow_right: {await general.create_invite(max_uses = 1)} :arrow_left:'''
+                                      )  # !!!!!
+                except:
+                    pass
                 await guild.kick(user=member)
             elif member_bd[5] > 25200:  # Если афк больше 400 часов трупачек
                 await member.add_roles(dead)
@@ -520,17 +504,18 @@ async def on_member_join(member):  # Когда человек заходит н
 
 @client.event
 async def on_raw_reaction_add(reaction):
-    # chann = guild.get_channel(948658541206573106)
+    # chann = guild.get_channel(948646836258865152)
     # message = reaction.message_id
     # message = await chann.fetch_message(message)
     # await message.add_reaction(reaction.emoji)
     
-    if reaction.message_id == 968958987561226240:
+    if reaction.message_id == 970952344122581012:
         if str(reaction.emoji) == "✅" and who_im in reaction.member.roles:
             await reaction.member.add_roles(no_name)
             await reaction.member.remove_roles(who_im)
         elif str(reaction.emoji) == "❌":
-            await reaction.member.kick()
+            if who_im in reaction.member.roles:
+                await reaction.member.kick()
 
     if reaction.message_id == 968957147503296584 and str(
             reaction.emoji) == "💵":  # Минор
@@ -547,8 +532,8 @@ async def on_raw_reaction_add(reaction):
                 await reaction.member.remove_roles(role)
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-Была куплена Роль - "{stalin.name}"
-Данная роль имеется у {len(stalin.members)} чел.
+Была куплена Роль - "{minor.name}"
+Данная роль имеется у {len(minor.members)} чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )  # !!!!!!
             await reaction.member.add_roles(minor)
@@ -592,8 +577,8 @@ async def on_raw_reaction_add(reaction):
                 await reaction.member.remove_roles(role)
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-Была куплена Роль - "{stalin.name}"
-Данная роль имеется у {len(stalin.members)} чел.
+Была куплена Роль - "{kozyrok.name}"
+Данная роль имеется у {len(kozyrok.members)} чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )
             await reaction.member.add_roles(kozyrok)
@@ -635,8 +620,8 @@ async def on_raw_reaction_add(reaction):
                 await reaction.member.remove_roles(role)
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-Была куплена Роль - "{stalin.name}"
-Данная роль имеется у {len(stalin.members)} чел.
+Была куплена Роль - "{churchill.name}"
+Данная роль имеется у {len(churchill.members)} чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )
             await reaction.member.add_roles(churchill)
@@ -678,8 +663,8 @@ async def on_raw_reaction_add(reaction):
                 await reaction.member.remove_roles(role)
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-Была куплена Роль - "{stalin.name}"
-Данная роль имеется у {len(stalin.members)} чел.
+Была куплена Роль - "{intellegence.name}"
+Данная роль имеется у {len(intellegence.members)} чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )
             await reaction.member.add_roles(intellegence)
@@ -750,11 +735,11 @@ async def on_raw_reaction_add(reaction):
 
 :gift_heart: **Приятной Вам Игры!** :cupid:''')
 
-    if reaction.message_id == 968960778403196968 and str(
+    if reaction.message_id == 970951993252278344 and str(
             reaction.emoji) == "<:HeartsofIronIV:953363622501969960>":  # HOI
         if hoi not in reaction.member.roles:
             await reaction.member.add_roles(hoi)
-    if reaction.message_id == 968960778403196968 and str(
+    if reaction.message_id == 970951993252278344 and str(
             reaction.emoji) == "<:MenofWar:953352918218711070>":  # MO
         if mow not in reaction.member.roles:
             await reaction.member.add_roles(mow)
@@ -799,6 +784,8 @@ async def on_message(message):
         else:
             if not flag:
                 await timer_messages(5)
+           
+                
 
     
 
