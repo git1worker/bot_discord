@@ -337,6 +337,11 @@ async def on_ready():
     global vip_roles
 
     global agreement
+    global minor_mess
+    global kozyrok_mess
+    global churchill_mess
+    global intellegence_mess
+    global stalin_mess
     guild = client.get_guild(940667074093645856)  # Объект сервера
 
     who_im = guild.get_role(951918170527105105)
@@ -376,14 +381,18 @@ async def on_ready():
     tech_channels.append(guild.get_channel(948646836258865152))  # info
     tech_channels.append(guild.get_channel(949293533028835408))  # news
     tech_channels.append(guild.get_channel(949296173506777140))  # update
-    tech_channels.append(guild.get_channel(949296173506777140))  # shop
+    tech_channels.append(guild.get_channel(967711624108597318))  # shop
     general = guild.get_channel(962035426644885565)
     main_roles = [no_name, chel, zymerok, lybitel, worker, zadrot]
     trust_roles = [dont_bot, plebey, civilian]
     vip_roles = [minor, kozyrok, churchill, intellegence, stalin]
 
     agreement = await guild.get_channel(948646836258865152).fetch_message(970952344122581012)
-
+    minor_mess = await guild.get_channel(967711624108597318).fetch_message(968957147503296584)
+    kozyrok_mess = await guild.get_channel(967711624108597318).fetch_message(968957358640341022)
+    churchill_mess = await guild.get_channel(967711624108597318).fetch_message(968957518715973762)
+    intellegence_mess = await guild.get_channel(967711624108597318).fetch_message(968957651822182410)
+    stalin_mess = await guild.get_channel(967711624108597318).fetch_message(968957729458765914)
     if not os.path.isfile("./mydatabase.db"):
         """
         Если базы данных нет она создается и всем участникам дается роль новичка
@@ -464,7 +473,7 @@ async def on_member_remove(member):
 
 @client.event
 async def on_member_ban(guild, user):
-    if member.id in admins:
+    if user.id in admins:
         return
     cursor.execute(f"""DELETE FROM dis_users WHERE id_discord = {user.id}""")
     conn.commit()
@@ -555,7 +564,7 @@ async def on_raw_reaction_add(reaction):
 
     elif reaction.message_id == 968957147503296584 and str(
             reaction.emoji) == "💵":  # Минор
-        await reaction.message.remove_reaction("💵", reaction.member)
+        await minor_mess.remove_reaction("💵", reaction.member)
         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {reaction.user_id}"""
         )
         member_reaction = cursor.fetchone()
@@ -600,7 +609,7 @@ async def on_raw_reaction_add(reaction):
 :gift_heart: **Приятной Вам Игры!** :cupid:''')  # !!!!!!!
     elif reaction.message_id == 968957358640341022 and str(
             reaction.emoji) == "💵":  # Острый Козырёк
-        await reaction.message.remove_reaction("💵", reaction.member)
+        await kozyrok_mess.remove_reaction("💵", reaction.member)
         cursor.execute(
             f"""SELECT * FROM dis_users WHERE id_discord = {reaction.user_id}"""
         )
@@ -644,7 +653,7 @@ async def on_raw_reaction_add(reaction):
 :gift_heart: **Приятной Вам Игры!** :cupid:''')
     elif reaction.message_id == 968957518715973762 and str(
             reaction.emoji) == "💵":  # Эх... Черчилль III, да...
-        await reaction.message.remove_reaction("💵", reaction.member)
+        await churchill_mess.remove_reaction("💵", reaction.member)
         cursor.execute(
             f"""SELECT * FROM dis_users WHERE id_discord = {reaction.user_id}"""
         )
@@ -688,7 +697,7 @@ async def on_raw_reaction_add(reaction):
 :gift_heart: **Приятной Вам Игры!** :cupid:''')
     elif reaction.message_id == 968957651822182410 and str(
             reaction.emoji) == "💵":  # Интеллигенция
-        await reaction.message.remove_reaction("💵", reaction.member)
+        await intellegence_mess.remove_reaction("💵", reaction.member)
         cursor.execute(
             f"""SELECT * FROM dis_users WHERE id_discord = {reaction.user_id}"""
         )
@@ -732,7 +741,7 @@ async def on_raw_reaction_add(reaction):
 :gift_heart: **Приятной Вам Игры!** :cupid:''')
     elif reaction.message_id == 968957729458765914 and str(
             reaction.emoji) == "💵":  # Шиза Сталина
-        await reaction.message.remove_reaction("💵", reaction.member)
+        await stalin_mess.remove_reaction("💵", reaction.member)
         cursor.execute(
             f"""SELECT * FROM dis_users WHERE id_discord = {reaction.user_id}"""
         )
