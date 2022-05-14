@@ -1,5 +1,5 @@
 import discord, sqlite3, time, os, asyncio
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 # from discord_components import DiscordComponents, ComponentsBot, Button, Select, SelectOption
 
@@ -15,29 +15,30 @@ list_warnings = []
 # authors_messages = []
 messages = {}
 
-my_secret = os.environ['Token']
+# my_secret = os.environ['Token']
 admins = []
 links_warn = []
-from flask import Flask
-from threading import Thread
-
-app = Flask('')
-
-
-@app.route('/')
-def home():
-    return "Монитор активен."
-
-
-def run():
-    app.run(host='0.0.0.0', port=8080)
-
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-
-keep_alive()
+# from flask import Flask
+# from threading import Thread
+#
+# app = Flask('')
+#
+#
+# @app.route('/')
+# def home():
+#     return "Монитор активен."
+#
+#
+# def run():
+#     app.run(host='0.0.0.0', port=8080)
+#
+#
+# def keep_alive():
+#     t = Thread(target=run)
+#     t.start()
+#
+#
+# keep_alive()
 
 """
 
@@ -48,7 +49,7 @@ keep_alive()
 
 async def check_main_roles(member_bd, member):  # Проверка на выдачу ролей
     f1 = int(member_bd[3])
-    f2 = member_bd[2]
+    f2 = int(member_bd[2])
     m_r = member.roles
     # if no_name in m_r:
     #     print("noname")
@@ -88,12 +89,12 @@ async def check_main_roles(member_bd, member):  # Проверка на выда
                 if role in m_r:
                     await member.remove_roles(role)
             await member.add_roles(zymerok)
-    else:
-        if (no_name or who_im) not in m_r:
-            for role in main_roles:
-                if role in m_r:
-                    await member.remove_roles(role)
-            await member.add_roles(no_name)
+    # else:
+    #     if (no_name or who_im) not in m_r:
+    #         for role in main_roles:
+    #             if role in m_r:
+    #                 await member.remove_roles(role)
+    #         await member.add_roles(no_name)
     # print("Третья часть: ", time.time() - t)
 
 
@@ -103,7 +104,7 @@ def member_messenger(id):  # Подсчет сообщений
         messages[id] = messages[id] + 1
     else:
         messages[id] = 1
-    
+
     # print(messages)
 
 
@@ -127,7 +128,8 @@ async def antispam(k):  # Вызов предупреждения по спам�
         else:
             await guild.ban(user)
     except:
-      print("ERROR Antispam")
+        print("ERROR Antispam")
+
 
 async def timer_messages(num_messages_in_2_sec):
     global flag
@@ -152,7 +154,7 @@ async def timer_messages(num_messages_in_2_sec):
         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {k}""")
         num = cursor.fetchone()
         cursor.execute(
-            f"""UPDATE dis_users SET num_mess = {num[2] + v} WHERE id_discord = {k}"""
+            f"""UPDATE dis_users SET num_mess = {int(num[2]) + int(v)} WHERE id_discord = {k}"""
         )
         conn.commit()
     # print(time.time()-t)
@@ -167,125 +169,206 @@ async def timer_messages(num_messages_in_2_sec):
 """
 
 
+# class Voicechannel():
+#     def __init__(self, member, num):
+#         self.member = member
+#         self.num = num
+#
+#     async def create(self):
+#         if self.num == 1:
+#             await self.x1()
+#         elif self.num == 2:
+#             await self.x2()
+#         elif self.num == 3:
+#             await self.x3()
+#         # elif self.num == 4:
+#         #     await self.x4()
+#         # elif self.num == 5:
+#         #     await self.x5()
+#         # elif self.num == 6:
+#         #     await self.x6()
+#         # elif self.num == 8:
+#         #     await self.x8()
+#         elif self.num == 99:
+#             await self.x99()
+#
+#     async def x1(self):
+#         channel = await guild.create_voice_channel(name="1x1", user_limit=2, category=gaming_zone)
+#         try:
+#             await self.member.move_to(channel)
+#         except:
+#             await self.member.send("Зайдите в любой голосовой канал")
+#         await self.check(channel)
+#
+#     async def x2(self):
+#         channel = await guild.create_voice_channel(name="2x2", user_limit=4, category=gaming_zone)
+#         try:
+#             await self.member.move_to(channel)
+#         except:
+#             await self.member.send("Зайдите в любой голосовой канал")
+#         await self.check(channel)
+#
+#     async def x3(self):
+#         channel = await guild.create_voice_channel(name="3x3", user_limit=6, category=gaming_zone)
+#         try:
+#             await self.member.move_to(channel)
+#         except:
+#             await self.member.send("Зайдите в любой голосовой канал")
+#         await self.check(channel)
+#
+#     # async def x4(self):
+#     #     channel = await guild.create_voice_channel(name="4x4", user_limit=8, category=gaming_zone)
+#     #     await self.member.move_to(channel)
+#     #     await self.check(channel)
+#     #
+#     # async def x5(self):
+#     #     channel = await guild.create_voice_channel(name="5x5", user_limit=10, category=gaming_zone)
+#     #     await self.member.move_to(channel)
+#     #     await self.check(channel)
+#     #
+#     # async def x6(self):
+#     #     channel = await guild.create_voice_channel(name="6x6", user_limit=12, category=gaming_zone)
+#     #     await self.member.move_to(channel)
+#     #     await self.check(channel)
+#     #
+#     # async def x8(self):
+#     #     channel = await guild.create_voice_channel(name="8x8", user_limit=16, category=gaming_zone)
+#     #     await self.member.move_to(channel)
+#     #     await self.check(channel)
+#
+#     async def x99(self):
+#         channel = await guild.create_voice_channel(name="99x99", category=gaming_zone)
+#         try:
+#             await self.member.move_to(channel)
+#         except:
+#             await self.member.send("Зайдите в любой голосовой канал")
+#         await self.check(channel)
+#
+
+
 async def timer_halfmin():  # Таймер на каждую минуту
     # global authors_messages
     while True:
-        try:
-            t1 = time.time()
-            result = time.gmtime(t1)
-            if result.tm_hour == 20 and result.tm_min == 1 and result.tm_sec > 49:
-                with open("night.png", "rb") as image:
-                    avatar = image.read()
-                await client.user.edit(avatar=avatar, username="Vovan sleepy")
-            if result.tm_hour == 4 and result.tm_min == 1 and result.tm_sec > 49:
-                with open("day.jpeg", "rb") as image:
-                    avatar = image.read()
-                await client.user.edit(avatar=avatar, username="Vovan")
-            members = guild.members
-            for member in members:
-                # t2 = time.time()
+
+        t1 = time.time()
+        result = time.gmtime(t1)
+        if result.tm_hour == 20 and result.tm_min == 1 and result.tm_sec > 49:
+            with open("night.png", "rb") as image:
+                avatar = image.read()
+            await client.user.edit(avatar=avatar, username="Vovan sleepy")
+        if result.tm_hour == 4 and result.tm_min == 1 and result.tm_sec > 49:
+            with open("day.jpeg", "rb") as image:
+                avatar = image.read()
+            await client.user.edit(avatar=avatar, username="Vovan")
+
+        members = guild.members
+        for member in members:
+            # t2 = time.time()
+            # print(member.name)
+            if member.bot:
+                continue
+
+            cursor.execute(
+                f"""SELECT * FROM dis_users WHERE id_discord = {member.id}""")
+            member_bd = cursor.fetchone()
+            if member_bd[1] == 0 and member_bd[5] > 259200:
+                await guild.kick(user=member)
+            if member.id not in admins:
+                if admin in member.roles:
+                    admins.append(member.id)
+                elif organizer in member.roles:
+                    admins.append(member.id)
+                elif moder in member.roles:
+                    admins.append(member.id)
+            # print(member.name)
+            # print(member_bd[5])
+            # print("Первая часть: ", time.time() - t2)
+            cursor.execute(
+                f"""UPDATE dis_users SET time_afk = {member_bd[5] + 0.166} WHERE id_discord = {member.id}"""
+            )
+            conn.commit()
+            # print("Первая часть: ", time.time()-t2) 0.004997968673706055
+            try:
                 # print(member.name)
-                if member.bot:
-                    continue
-                cursor.execute(
-                    f"""SELECT * FROM dis_users WHERE id_discord = {member.id}""")
-                member_bd = cursor.fetchone()
-                if member.id not in admins:
-                    if admin in member.roles:
-                        admins.append(member.id)  
-                    elif organizer in member.roles:
-                        admins.append(member.id)
-                    elif moder in member.roles:
-                        admins.append(member.id)
-                
-                # print(member.name)
-                # print(member_bd[5])
-                cursor.execute(
-                    f"""UPDATE dis_users SET time_afk = {member_bd[5] + 0.166} WHERE id_discord = {member.id}"""
-                )
-                conn.commit()
+                # print(member.voice)
+                if member.voice is not None and member.voice.channel != pivo and member.voice.self_mute == False:  # Если участник в войсе и не в пивнушке
+                    cursor.execute(  # Счет времени в войсе
+                        f"""UPDATE dis_users SET time_on_voice = {member_bd[3] + 0.166} WHERE id_discord = {member.id}"""
+                    )
+                    conn.commit()
+                    cursor.execute(
+                        f"""UPDATE dis_users SET time_afk = 0 WHERE id_discord = {member.id}"""
+                    )  # Обнуление счетчика афк
+                    conn.commit()
+            except:
+                pass
+            # print("Первая часть: ", time.time())  0.00599980354309082
+            m_roles = member.roles
+            if nash_chel in m_roles:
+                for role in trust_roles:
+                    if role in m_roles:
+                        await member.remove_roles(role)
+            elif member_bd[3] > 4200:
+                for role in [dont_bot, plebey]:
+                    if role in m_roles:
+                        await member.remove_roles(role)
+                if civilian not in m_roles:
+                    await member.add_roles(civilian)
+            elif (member_bd[3] > 600
+                  or int(member_bd[2]) > 350) and civilian not in m_roles:
+                if dont_bot in m_roles:
+                    await member.remove_roles(dont_bot)
+                if plebey not in m_roles:
+                    await member.add_roles(plebey)
+            elif (member_bd[3] > 0
+                  or int(member_bd[2]) > 20) and (civilian
+                                             or plebey) not in m_roles:
+                if dont_bot not in m_roles:
+                    await member.add_roles(dont_bot)
+            # print("Вторая часть: ", time.time() - t2)
+            await check_main_roles(member_bd, member)
+
+            if dead in m_roles and member_bd[
+                5] < 24000:  # Удаление роли трупа если число афк меньше недели
+                member.remove_roles(dead)
+
+            if member_bd[
+                5] > 25440 and member.id not in admins:  # Если афк больше 424 часов кик
                 try:
-                    # print(member.name)
-                    # print(member.voice)
-                    if member.voice is not None and member.voice.channel != pivo and member.voice.self_mute == False:  # Если участник в войсе и не в пивнушке
-                        cursor.execute(  # Счет времени в войсе
-                            f"""UPDATE dis_users SET time_on_voice = {member_bd[3] + 0.166} WHERE id_discord = {member.id}"""
-                        )
-                        conn.commit()
-                        cursor.execute(
-                            f"""UPDATE dis_users SET time_afk = 0 WHERE id_discord = {member.id}"""
-                        )  # Обнуление счетчика афк
-                        conn.commit()
+
+                    await member.send(f'''Ещё не запылился?
+    Ты был **Исключён** из сервера " :banana: **Men of Cum - Redux** :milk:" за **Не активность** на **Сервере!**
+    Если ты захочешь **Вернуться** к нам на **Сервер**, то советую поторопиться ...
+    Все твои **Роли** скоро **Исчезнут**, да да...
+    *У тебя Неделя, Дружок* :innocent:
+
+    :arrow_right: {await general.create_invite(max_uses=1)} :arrow_left:'''
+                                      )  # !!!!!
                 except:
                     pass
-                # print("Первая часть: ", time.time())
-                if nash_chel in member.roles:
-                    for role in trust_roles:
-                        if role in member.roles:
-                            await member.remove_roles(role)
-                elif member_bd[3] > 4200 and nash_chel not in member.roles:
-                    if civilian not in member.roles:
-                        for role in trust_roles:
-                            if role in member.roles:
-                                await member.remove_roles(role)
-                        await member.add_roles(civilian)
-                elif (member_bd[3] > 600
-                      or member_bd[2] > 350) and (civilian or nash_chel) not in member.roles:
-                    if plebey not in member.roles:
-                        for role in trust_roles:
-                            if role in member.roles:
-                                await member.remove_roles(role)
-                        await member.add_roles(plebey)
-                elif (member_bd[3] > 0
-                      or member_bd[2] > 20) and (civilian
-                                                 or plebey or nash_chel) not in member.roles:
-                    if dont_bot not in member.roles:
-                        await member.add_roles(dont_bot)
-                # print("Вторая часть: ", time.time() - t2)
-                await check_main_roles(member_bd, member)
-    
-                if dead in member.roles and member_bd[
-                        5] < 24000:  # Удаление роли трупа если число афк меньше недели
-                    member.remove_roles(dead)
-    
-                if member_bd[
-                        5] > 25440 and member.id not in admins:  # Если афк больше 424 часов кик
-                    try:
-                        
-                        await member.send(f'''Ещё не запылился?
-        Ты был **Исключён** из сервера " :banana: **Men of Cum - Redux** :milk:" за **Не активность** на **Сервере!**
-        Если ты захочешь **Вернуться** к нам на **Сервер**, то советую поторопиться ...
-        Все твои **Роли** скоро **Исчезнут**, да да...
-        *У тебя Неделя, Дружок* :innocent:
-        
-        :arrow_right: {await general.create_invite(max_uses = 1)} :arrow_left:'''
-                                          )  # !!!!!
-                    except:
-                        pass
-                    await guild.kick(user=member)
-                elif member_bd[5] > 24000:  # Если афк больше 420 часов трупачек
-                    await member.add_roles(dead)
-    
-                
-                # print("Обход участников:", time.time()-t2)
-            cursor.execute(
-                f"""SELECT * FROM dis_users WHERE time_after_leaving > 0 """
-            )  # Обновление покинувших сервер
-            users = cursor.fetchall()
-            for i in users:
-                if i[6] > 10080:  # Если время ухода с сервера больше недели удаление из базы данных
-                    cursor.execute(
-                        f"""DELETE FROM dis_users WHERE id_discord = {i[0]}""")
-                else:
-                    cursor.execute(
-                        f"""UPDATE dis_users SET time_after_leaving = {i[6] + 0.166} WHERE id_discord = {i[0]}"""
-                    )
-            conn.commit()
-            diff = time.time() - t1
-            print(diff)
-            await asyncio.sleep(10 - diff)
-        except:
-          print("ERROR")
+                await guild.kick(user=member)
+            elif member_bd[5] > 24000:  # Если афк больше 420 часов трупачек
+                await member.add_roles(dead)
+
+            # print("Обход участников:", time.time()-t2)
+        cursor.execute(
+            f"""SELECT * FROM dis_users WHERE time_after_leaving > 0 """
+        )  # Обновление покинувших сервер
+        users = cursor.fetchall()
+        for i in users:
+            if i[6] > 10080:  # Если время ухода с сервера больше недели удаление из базы данных
+                cursor.execute(
+                    f"""DELETE FROM dis_users WHERE id_discord = {i[0]}""")
+            else:
+                cursor.execute(
+                    f"""UPDATE dis_users SET time_after_leaving = {i[6] + 0.166} WHERE id_discord = {i[0]}"""
+                )
+        conn.commit()
+        diff = time.time() - t1
+        print(diff)
+        await asyncio.sleep(10 - diff)
+
+
 
 """
 
@@ -342,6 +425,11 @@ async def on_ready():
     global churchill_mess
     global intellegence_mess
     global stalin_mess
+    global balance
+    global time_voice
+
+    global gaming_zone
+
     guild = client.get_guild(940667074093645856)  # Объект сервера
 
     who_im = guild.get_role(951918170527105105)
@@ -367,7 +455,7 @@ async def on_ready():
     organizer = guild.get_role(945344360973742090)
     admin = guild.get_role(972535623128862770)
     moder = guild.get_role(972533459790753792)
-  
+
     hoi = guild.get_role(953762306628653146)
     mow = guild.get_role(953763442303594616)
 
@@ -393,6 +481,11 @@ async def on_ready():
     churchill_mess = await guild.get_channel(967711624108597318).fetch_message(968957518715973762)
     intellegence_mess = await guild.get_channel(967711624108597318).fetch_message(968957651822182410)
     stalin_mess = await guild.get_channel(967711624108597318).fetch_message(968957729458765914)
+    balance = await guild.get_channel(974356084502433863).fetch_message(974987029043609660)
+    time_voice = await guild.get_channel(974356084502433863).fetch_message(974989390755532800)
+
+    gaming_zone = guild.get_channel(940667074638921771)
+
     if not os.path.isfile("./mydatabase.db"):
         """
         Если базы данных нет она создается и всем участникам дается роль новичка
@@ -409,7 +502,7 @@ async def on_ready():
             if not member.bot:
                 cursor.execute(f"""INSERT INTO dis_users
                                               VALUES ('{member.id}', '0', '0',
-                                              '0', '0', '0', '0')""")
+                                              '0', '0', '0', '0', {time.time()})""")
                 conn.commit()
     else:
         conn = sqlite3.connect("./mydatabase.db")  # Соединение с бд
@@ -419,7 +512,7 @@ async def on_ready():
                 try:
                     cursor.execute(f"""INSERT INTO dis_users
                                               VALUES ('{member.id}', '0', '0',
-                                              '0', '0', '0', '0')""")
+                                              '0', '0', '0', '0', {time.time()})""")
                     conn.commit()
                 except:
                     pass
@@ -442,11 +535,11 @@ async def on_ready():
 @client.event
 async def on_raw_reaction_remove(reaction):
     user = guild.get_member(reaction.user_id)
-    if reaction.message_id == 968960778403196968 and str(
+    if reaction.message_id == 970951993252278344 and str(
             reaction.emoji) == "<:HeartsofIronIV:953363622501969960>":  # HOI
         if hoi in user.roles:
             await user.remove_roles(hoi)
-    if reaction.message_id == 968960778403196968 and str(
+    if reaction.message_id == 970951993252278344 and str(
             reaction.emoji) == "<:MenofWar:953352918218711070>":  # MO
         if mow in user.roles:
             await user.remove_roles(mow)
@@ -455,8 +548,6 @@ async def on_raw_reaction_remove(reaction):
 @client.event
 async def on_member_remove(member):
     if member.bot:  # Проверка на сообщение от пользователя
-        return
-    if member.id in admins:
         return
     if who_im in member.roles:
         cursor.execute(
@@ -489,10 +580,9 @@ async def on_member_join(member):  # Когда человек заходит н
         await member.add_roles(who_im)  # Добавление новичку роли Кто я?
         cursor.execute(f"""INSERT INTO dis_users
                               VALUES ('{member.id}', '0', '0',
-                              '0', '0', '0', '0')"""
+                              '0', '0', '0', '0', {time.time()})"""
                        )  # нулевая роль это доверительная кто я
         conn.commit()  # Сохранение изменений в бд
-        
 
     else:  # Если человек найден в бд
         cursor.execute(f"""UPDATE dis_users SET time_after_leaving 
@@ -524,15 +614,15 @@ async def on_member_join(member):  # Когда человек заходит н
         # print("Вторая часть: ", time.time() - t2)
         await check_main_roles(member_bd2, member)
         # print(member_bd2[1]
-        if member_bd2[1] == 1:  # Проверка из базы данных на роль
+        if member_bd2[1] == 2:  # Проверка из базы данных на роль
             await member.add_roles(minor)
-        elif member_bd2[1] == 2:  # Проверка из базы данных на роль
-            await member.add_roles(kozyrok)
         elif member_bd2[1] == 3:  # Проверка из базы данных на роль
-            await member.add_roles(churchill)
+            await member.add_roles(kozyrok)
         elif member_bd2[1] == 4:  # Проверка из базы данных на роль
-            await member.add_roles(intellegence)
+            await member.add_roles(churchill)
         elif member_bd2[1] == 5:  # Проверка из базы данных на роль
+            await member.add_roles(intellegence)
+        elif member_bd2[1] == 6:  # Проверка из базы данных на роль
             await member.add_roles(stalin)
         await member.send('''О, всё таки вернулся) :kissing_heart:
 Значит не зря тебе напомнил.
@@ -541,32 +631,90 @@ async def on_member_join(member):  # Когда человек заходит н
 *Это был последний раз, Дружок*''')  # Бот пишет в лс  !!!!!!!
 
 
+async def check(channel):
+    while True:
+        await asyncio.sleep(5)
+        if len(channel.members) == 0:
+            await channel.delete()
+            break
+
+
 @client.event
 async def on_raw_reaction_add(reaction):
-    # chann = guild.get_channel(948658541206573106)
+    # chann = guild.get_channel(974356084502433863)
     # message = reaction.message_id
     # message = await chann.fetch_message(message)
     # await message.add_reaction(reaction.emoji)
-    
+
+    # print(reaction.emoji)
+    if reaction.message_id == 974989390755532800:
+        if str(reaction.emoji) == "1️⃣":
+            await time_voice.remove_reaction("1️⃣", reaction.member)
+            channel = await guild.create_voice_channel(name="1x1", user_limit=2, category=gaming_zone)
+            try:
+                await reaction.member.move_to(channel)
+                await check(channel)
+            except:
+                await reaction.member.send("Зайдите в любой голосовой канал")
+
+        if str(reaction.emoji) == "2️⃣":
+            await time_voice.remove_reaction("2️⃣", reaction.member)
+            channel = await guild.create_voice_channel(name="2x2", user_limit=4, category=gaming_zone)
+            try:
+                await reaction.member.move_to(channel)
+                await check(channel)
+            except:
+                await reaction.member.send("Зайдите в любой голосовой канал")
+        if str(reaction.emoji) == "3️⃣":
+            await time_voice.remove_reaction("3️⃣", reaction.member)
+            channel = await guild.create_voice_channel(name="3x3", user_limit=6, category=gaming_zone)
+            try:
+                await reaction.member.move_to(channel)
+                await check(channel)
+            except:
+                await reaction.member.send("Зайдите в любой голосовой канал")
+        if str(reaction.emoji) == "♾️":
+            await time_voice.remove_reaction("♾️", reaction.member)
+            channel = await guild.create_voice_channel(name="99x99", category=gaming_zone)
+            try:
+                await reaction.member.move_to(channel)
+                await check(channel)
+            except:
+                await reaction.member.send("Зайдите в любой голосовой канал")
+
+    if reaction.message_id == 974987029043609660:
+        if str(reaction.emoji) == "💰":
+            cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {reaction.user_id}"""
+                           )
+            member_reaction = cursor.fetchone()
+            await balance.remove_reaction("💰", reaction.member)
+            await reaction.member.send(
+                f'''Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
+Чтобы их **Восполнить**, нужно **Зайти**...
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:''')
+
     if reaction.message_id == 970952344122581012:
         if str(reaction.emoji) == "✅":
             await agreement.remove_reaction("✅", reaction.member)
             if who_im in reaction.member.roles:
                 await reaction.member.add_roles(no_name)
                 await reaction.member.remove_roles(who_im)
+                cursor.execute(f"""UPDATE dis_users SET role 
+                                    = 1 WHERE id_discord = {reaction.user_id}""")
+                conn.commit()
         elif str(reaction.emoji) == "❌":
             await agreement.remove_reaction("❌", reaction.member)
             if who_im in reaction.member.roles:
-              try:
-                  await reaction.member.kick()
-              except:
-                  pass
+                try:
+                    await reaction.member.kick()
+                except:
+                    pass
 
     elif reaction.message_id == 968957147503296584 and str(
             reaction.emoji) == "💵":  # Минор
         await minor_mess.remove_reaction("💵", reaction.member)
         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {reaction.user_id}"""
-        )
+                       )
         member_reaction = cursor.fetchone()
         if minor in reaction.member.roles:
             await reaction.member.send(
@@ -578,12 +726,12 @@ async def on_raw_reaction_add(reaction):
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
 Была куплена Роль - "{minor.name}"
-Данная роль имеется у {len(minor.members)} чел.
+Данная роль имеется у **{len(minor.members)}** чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )  # !!!!!
             await reaction.member.add_roles(minor)
             cursor.execute(f"""UPDATE dis_users SET role 
-                    = 1 WHERE id_discord = {member_reaction[0]}""")
+                    = 2 WHERE id_discord = {member_reaction[0]}""")
             conn.commit()
             cursor.execute(f"""UPDATE dis_users SET time_on_voice 
                                 = {member_reaction[3] - 15000} WHERE id_discord = {member_reaction[0]}"""
@@ -594,7 +742,7 @@ async def on_raw_reaction_add(reaction):
             )
             conn.commit()
             if member_reaction[
-                    3] < 61:  # Если у человека осталось меньше часа, устанавливается час
+                3] < 61:  # Если у человека осталось меньше часа, устанавливается час
                 cursor.execute(f"""UPDATE dis_users SET time_on_voice
              = 61 WHERE id_discord = {member_reaction[0]}""")
                 conn.commit()
@@ -602,9 +750,9 @@ async def on_raw_reaction_add(reaction):
         else:
             """{member_bd"""
             await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-Ваш Баланс : {int(member_reaction[3]/60)} ч. и {int(member_reaction[2])} сообщ.
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
 Чтобы их **Восполнить**, нужно **Зайти**...
-:arrow_right: {await general.create_invite(max_age = 1800,max_uses = 1)} :arrow_left:
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
 
 :gift_heart: **Приятной Вам Игры!** :cupid:''')  # !!!!!!!
     elif reaction.message_id == 968957358640341022 and str(
@@ -624,12 +772,12 @@ async def on_raw_reaction_add(reaction):
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
 Была куплена Роль - "{kozyrok.name}"
-Данная роль имеется у {len(kozyrok.members)} чел.
+Данная роль имеется у **{len(kozyrok.members)}** чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )
             await reaction.member.add_roles(kozyrok)
             cursor.execute(f"""UPDATE dis_users SET role 
-                                = 2 WHERE id_discord = {member_reaction[0]}""")
+                                = 3 WHERE id_discord = {member_reaction[0]}""")
             cursor.execute(f"""UPDATE dis_users SET time_on_voice 
                                             = {member_reaction[3] - 18000} WHERE id_discord = {member_reaction[0]}"""
                            )
@@ -639,16 +787,16 @@ async def on_raw_reaction_add(reaction):
             )
             conn.commit()
             if member_reaction[
-                    3] < 61:  # Если у человека осталось меньше часа, устанавливается час
+                3] < 61:  # Если у человека осталось меньше часа, устанавливается час
                 cursor.execute(f"""UPDATE dis_users SET time_on_voice
                          = 61 WHERE id_discord = {member_reaction[0]}""")
                 conn.commit()
             await check_main_roles(member_reaction, reaction.member)
         else:
             await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-Ваш Баланс : {int(member_reaction[3]/60)} ч. и {int(member_reaction[2])} сообщ.
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
 Чтобы их **Восполнить**, нужно **Зайти**...
-:arrow_right: {await general.create_invite(max_age = 1800,max_uses = 1)} :arrow_left:
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
 
 :gift_heart: **Приятной Вам Игры!** :cupid:''')
     elif reaction.message_id == 968957518715973762 and str(
@@ -668,12 +816,12 @@ async def on_raw_reaction_add(reaction):
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
 Была куплена Роль - "{churchill.name}"
-Данная роль имеется у {len(churchill.members)} чел.
+Данная роль имеется у **{len(churchill.members)}** чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )
             await reaction.member.add_roles(churchill)
             cursor.execute(f"""UPDATE dis_users SET role 
-                                = 3 WHERE id_discord = {member_reaction[0]}""")
+                                = 4 WHERE id_discord = {member_reaction[0]}""")
             cursor.execute(f"""UPDATE dis_users SET time_on_voice 
                                             = {member_reaction[3] - 18000} WHERE id_discord = {member_reaction[0]}"""
                            )
@@ -683,16 +831,16 @@ async def on_raw_reaction_add(reaction):
             )
             conn.commit()
             if member_reaction[
-                    3] < 61:  # Если у человека осталось меньше часа, устанавливается час
+                3] < 61:  # Если у человека осталось меньше часа, устанавливается час
                 cursor.execute(f"""UPDATE dis_users SET time_on_voice
                          = 61 WHERE id_discord = {member_reaction[0]}""")
                 conn.commit()
             await check_main_roles(member_reaction, reaction.member)
         else:
             await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-Ваш Баланс : {int(member_reaction[3]/60)} ч. и {int(member_reaction[2])} сообщ.
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
 Чтобы их **Восполнить**, нужно **Зайти**...
-:arrow_right: {await general.create_invite(max_age = 1800,max_uses = 1)} :arrow_left:
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
 
 :gift_heart: **Приятной Вам Игры!** :cupid:''')
     elif reaction.message_id == 968957651822182410 and str(
@@ -712,12 +860,12 @@ async def on_raw_reaction_add(reaction):
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
 Была куплена Роль - "{intellegence.name}"
-Данная роль имеется у {len(intellegence.members)} чел.
+Данная роль имеется у **{len(intellegence.members)}** чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )
             await reaction.member.add_roles(intellegence)
             cursor.execute(f"""UPDATE dis_users SET role 
-                                = 4 WHERE id_discord = {member_reaction[0]}""")
+                                = 5 WHERE id_discord = {member_reaction[0]}""")
             cursor.execute(f"""UPDATE dis_users SET time_on_voice 
                                             = {member_reaction[3] - 24000} WHERE id_discord = {member_reaction[0]}"""
                            )
@@ -727,16 +875,16 @@ async def on_raw_reaction_add(reaction):
             )
             conn.commit()
             if member_reaction[
-                    3] < 61:  # Если у человека осталось меньше часа, устанавливается час
+                3] < 61:  # Если у человека осталось меньше часа, устанавливается час
                 cursor.execute(f"""UPDATE dis_users SET time_on_voice
                          = 61 WHERE id_discord = {member_reaction[0]}""")
                 conn.commit()
             await check_main_roles(member_reaction, reaction.member)
         else:
             await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-Ваш Баланс : {int(member_reaction[3]/60)} ч. и {int(member_reaction[2])} сообщ.
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
 Чтобы их **Восполнить**, нужно **Зайти**...
-:arrow_right: {await general.create_invite(max_age = 1800,max_uses = 1)} :arrow_left:
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
 
 :gift_heart: **Приятной Вам Игры!** :cupid:''')
     elif reaction.message_id == 968957729458765914 and str(
@@ -756,12 +904,12 @@ async def on_raw_reaction_add(reaction):
             await reaction.member.send(
                 f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
 Была куплена Роль - "{stalin.name}"
-Данная роль имеется у {len(stalin.members)} чел.
+Данная роль имеется у **{len(stalin.members)}** чел.
 :sparkling_heart: **Вы** всегда будите **Нашим** желанным **Покупателем!** :cupid:'''
             )
             await reaction.member.add_roles(stalin)
             cursor.execute(f"""UPDATE dis_users SET role 
-                                = 5 WHERE id_discord = {member_reaction[0]}""")
+                                = 6 WHERE id_discord = {member_reaction[0]}""")
             cursor.execute(f"""UPDATE dis_users SET time_on_voice 
                                             = {member_reaction[3] - 36000} WHERE id_discord = {member_reaction[0]}"""
                            )
@@ -771,16 +919,16 @@ async def on_raw_reaction_add(reaction):
             )
             conn.commit()
             if member_reaction[
-                    3] < 61:  # Если у человека осталось меньше часа, устанавливается час
+                3] < 61:  # Если у человека осталось меньше часа, устанавливается час
                 cursor.execute(f"""UPDATE dis_users SET time_on_voice
                          = 61 WHERE id_discord = {member_reaction[0]}""")
                 conn.commit()
             await check_main_roles(member_reaction, reaction.member)
         else:
             await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-Ваш Баланс : {int(member_reaction[3]/60)} ч. и {int(member_reaction[2])} сообщ.
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
 Чтобы их **Восполнить**, нужно **Зайти**...
-:arrow_right: {await general.create_invite(max_age = 1800,max_uses = 1)} :arrow_left:
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
 
 :gift_heart: **Приятной Вам Игры!** :cupid:''')
 
@@ -793,6 +941,7 @@ async def on_raw_reaction_add(reaction):
         if mow not in reaction.member.roles:
             await reaction.member.add_roles(mow)
 
+
     # if reaction.message_id == 966746342800113676 and str(reaction.emoji) == "✅":  # Баланс
     #     cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {reaction.member_id}""")
     #     balance = cursor.fetchone()
@@ -801,13 +950,12 @@ async def on_raw_reaction_add(reaction):
 
 @client.event
 async def on_message(message):
-    
     if message.author.bot:  # Проверка на сообщение от пользователя
         return
     # if message.author.id in admins:
     #     return
     if message.channel.id == 967710989728497664:  # Канал для комманд боту
-      await client.process_commands(message)
+        await client.process_commands(message)
     if str(
             message.channel.type
     ) != "private" and message.channel not in tech_channels:  # Проверка не на лс и не тех
@@ -833,10 +981,6 @@ async def on_message(message):
         else:
             if not flag:
                 await timer_messages(5)
-           
-                
-
-    
 
 
 # @client.event
@@ -850,15 +994,18 @@ async def on_message(message):
 -----COMMANDS-----
 
 """
+
+
 @client.command()
 async def insert_time(ctx, arg, arg2):
     user = await guild.fetch_member(arg)
-    cursor.execute(f"""UPDATE dis_users SET time_on_voice = {int(arg2)*60} WHERE id_discord = {arg}""")
+    cursor.execute(f"""UPDATE dis_users SET time_on_voice = {int(arg2) * 60} WHERE id_discord = {arg}""")
     conn.commit()
     cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
     bd = cursor.fetchone()
-    
-    await ctx.send(f"У участника {user.name} в базе данных {round(bd[3]/60)} ч.")
+
+    await ctx.send(f"У участника {user.name} в базе данных {round(bd[3] / 60)} ч.")
+
 
 @client.command()
 async def insert_mess(ctx, arg, arg2):
@@ -867,25 +1014,45 @@ async def insert_mess(ctx, arg, arg2):
     conn.commit()
     cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
     bd = cursor.fetchone()
-    
+
     await ctx.send(f"У участника {user.name} в базе данных {bd[2]} сообщ.")
+
 
 @client.command()
 async def get_info(ctx, arg):
-    user = await guild.fetch_member(arg)
     try:
+        user = await guild.fetch_member(arg)
+
         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
         bd = cursor.fetchone()
         await ctx.send(f"""Информация об участнике {user.name}:
 ID:  {bd[0]}
 Role:  {bd[1]}
 Number_messages:  {bd[2]}
-Time_on_voice:  {int(bd[3])} мин. = {int(bd[3])/60} ч.
+Time_on_voice:  {int(bd[3])} мин. = {int(bd[3]) / 60} ч.
 Warnings:  {bd[4]}
-Time_afk:  {int(bd[5])} мин. = {int(bd[5])/60} ч.
+Time_afk:  {int(bd[5])} мин. = {int(bd[5]) / 60} ч.
 Time_after_leaving:  {int(bd[6])}""")
     except:
         await ctx.send("Произошла ошибка")
+
+
+@client.command()
+async def insert(ctx, arg):
+    try:
+        cursor.execute(f"""{arg}""")
+        conn.commit()
+        await ctx.send("Успешно")
+    except:
+        await ctx.send("Произошла ошибка")
+
+
+@client.command()
+async def select(ctx, arg):
+    cursor.execute(f"""{arg}""")
+    bd = cursor.fetchall()
+    await ctx.send(f"""{len(bd)}""")
+
 '''
 @client.command()
 async def help(ctx):  # Команда help_me Выводит доступные команды
@@ -996,4 +1163,4 @@ async def get_info_messages(ctx, arg):  # Команда get_info_messages Вы�
 """
 
 if __name__ == '__main__':
-    client.run(my_secret)
+    client.run("")
