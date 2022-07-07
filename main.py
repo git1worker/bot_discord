@@ -1,4 +1,4 @@
-import discord, sqlite3, time, os, asyncio, datetime
+import discord, sqlite3, time, os, asyncio, datetime, subprocess
 from discord.ext import commands, tasks
 
 # from discord_components import DiscordComponents, ComponentsBot, Button, Select, SelectOption
@@ -18,6 +18,14 @@ messages = {}
 # my_secret = os.environ['Token']
 admins = []
 links_warn = []
+
+global log_var
+log_var = False
+global log_var2, diff
+log_var2 = False
+global log_timer
+# global log_var
+# log_var = False
 # from flask import Flask
 # from threading import Thread
 #
@@ -124,10 +132,14 @@ async def antispam(k):  # Вызов предупреждения по спам�
         if num == 1:
             await user.send(
                 "Здравствуй. Дружок, может тебе отдохнуть? Пальчики не устали?")
+            await exceptions.send(f"{datetime.datetime.now()} - warning_for_spam_1 - {user.name}")
         elif num == 2:
             await user.send("Ты живёшь последний понедельник, понял?")
+            await exceptions.send(f"{datetime.datetime.now()} - warning_for_spam_2 - {user.name} - "
+                                  f"Он живет последний понедельник")
         else:
             await guild.ban(user)
+            await exceptions.send(f"{datetime.datetime.now()} - ban_for_spam - {user.name}")
     except:
         print("ERROR Antispam")
 
@@ -177,90 +189,32 @@ async def check(channel):
 
 """
 
+class Timer(commands.Cog):
+    def __init__(self):
+        
+        self.main_loop.start()
 
-# class Voicechannel():
-#     def __init__(self, member, num):
-#         self.member = member
-#         self.num = num
-#
-#     async def create(self):
-#         if self.num == 1:
-#             await self.x1()
-#         elif self.num == 2:
-#             await self.x2()
-#         elif self.num == 3:
-#             await self.x3()
-#         # elif self.num == 4:
-#         #     await self.x4()
-#         # elif self.num == 5:
-#         #     await self.x5()
-#         # elif self.num == 6:
-#         #     await self.x6()
-#         # elif self.num == 8:
-#         #     await self.x8()
-#         elif self.num == 99:
-#             await self.x99()
-#
-#     async def x1(self):
-#         channel = await guild.create_voice_channel(name="1x1", user_limit=2, category=gaming_zone)
-#         try:
-#             await self.member.move_to(channel)
-#         except:
-#             await self.member.send("Зайдите в любой голосовой канал")
-#         await self.check(channel)
-#
-#     async def x2(self):
-#         channel = await guild.create_voice_channel(name="2x2", user_limit=4, category=gaming_zone)
-#         try:
-#             await self.member.move_to(channel)
-#         except:
-#             await self.member.send("Зайдите в любой голосовой канал")
-#         await self.check(channel)
-#
-#     async def x3(self):
-#         channel = await guild.create_voice_channel(name="3x3", user_limit=6, category=gaming_zone)
-#         try:
-#             await self.member.move_to(channel)
-#         except:
-#             await self.member.send("Зайдите в любой голосовой канал")
-#         await self.check(channel)
-#
-#     # async def x4(self):
-#     #     channel = await guild.create_voice_channel(name="4x4", user_limit=8, category=gaming_zone)
-#     #     await self.member.move_to(channel)
-#     #     await self.check(channel)
-#     #
-#     # async def x5(self):
-#     #     channel = await guild.create_voice_channel(name="5x5", user_limit=10, category=gaming_zone)
-#     #     await self.member.move_to(channel)
-#     #     await self.check(channel)
-#     #
-#     # async def x6(self):
-#     #     channel = await guild.create_voice_channel(name="6x6", user_limit=12, category=gaming_zone)
-#     #     await self.member.move_to(channel)
-#     #     await self.check(channel)
-#     #
-#     # async def x8(self):
-#     #     channel = await guild.create_voice_channel(name="8x8", user_limit=16, category=gaming_zone)
-#     #     await self.member.move_to(channel)
-#     #     await self.check(channel)
-#
-#     async def x99(self):
-#         channel = await guild.create_voice_channel(name="99x99", category=gaming_zone)
-#         try:
-#             await self.member.move_to(channel)
-#         except:
-#             await self.member.send("Зайдите в любой голосовой канал")
-#         await self.check(channel)
-#
+    def stop_timer(self):
+        self.main_loop.cancel()
 
+    def change_time(self, sec):
+        self.main_loop.change_interval(seconds=sec)
 
-async def timer_halfmin():  # Таймер на каждую минуту
-    # global authors_messages
-    global diff
-    while True:
+    @tasks.loop(seconds=10.0)
+    async def main_loop(self):
+        global log_var, log_var2, diff
         try:
-            log_timer = open("./log_timer.txt", "+a")
+            
+            # await exceptions.send(log_var)
+            if log_var:
+                # await exceptions.send("123")
+                try:
+                    os.remove("./log_timer.txt")
+                except:
+                    pass
+                await exceptions.send("Opened")
+                log_var2 = True
+                log_timer = open("./log_timer.txt", "+a")
             t1 = time.time()
             result = time.gmtime(t1)
             if result.tm_hour == 20 and result.tm_min == 1 and result.tm_sec > 49:
@@ -272,110 +226,158 @@ async def timer_halfmin():  # Таймер на каждую минуту
                     avatar = image.read()
                 await client.user.edit(avatar=avatar, username="Vovan")
             members = guild.members
-            # log_timer.write(f"\n {datetime.datetime.now()} - Start : \n")
+            
             for member in members:
                 t2 = time.time()
                 t3 = time.time()
                 # print(member.name)
 
+                # try:
+                if member.bot:
+                    continue
+                cursor.execute(
+                        f"""SELECT * FROM dis_users WHERE id_discord = {member.id}""")
+                member_bd = cursor.fetchone()
+                # print(member_bd)
                 try:
-                    if member.bot:
-                        continue
-
-                    cursor.execute(
-                            f"""SELECT * FROM dis_users WHERE id_discord = {member.id}""")
-                    member_bd = cursor.fetchone()
-                    # print(member_bd)
-                    if member_bd[1] == 0 and member_bd[5] > 4320:
-                        await guild.kick(user=member)
-                    if admin in member.roles:
-                        if member.id not in admins:
-                            admins.append(member.id)
-                    elif organizer in member.roles:
-                        if member.id not in admins:
-                            admins.append(member.id)
-                    elif moder in member.roles:
-                        if member.id not in admins:
-                            admins.append(member.id)
-                    # print(member.name)
-                    # print(member_bd[5])
-                    # log_timer.write(f"{member.name} - Первая часть: {time.time() - t2}\n")
-                    # t2 = time.time()
-                    cursor.execute(
-                        f"""UPDATE dis_users SET time_afk = {member_bd[5] + 0.166} WHERE id_discord = {member.id}"""
-                    )
-                    conn.commit()
-                    # log_timer.write(f"{member.name} - Вторая часть(Обновление в бд афк): {time.time() - t2}\n")
-                    # t2 = time.time()
-                    try:
-                        # print(member.name)
-                        # print(member.voice)
-                        if member.voice is not None and member.voice.channel != pivo and member.voice.self_mute == False:  # Если участник в войсе и не в пивнушке
-                            cursor.execute(  # Счет времени в войсе
-                                f"""UPDATE dis_users SET time_on_voice = {member_bd[3] + 0.166} WHERE id_discord = {member.id}"""
-                            )
-                            conn.commit()
+                    if member_bd[8] is not None:
+                        if datetime.datetime.now() > datetime.datetime.strptime(member_bd[8], "%d/%m/%Y, %H:%M:%S"):
+                            struct_time = datetime.datetime.now()
+                            struct_time += datetime.timedelta(weeks=1) + datetime.timedelta(hours=3)
+                            struct_time = struct_time.strftime('%d/%m/%Y, %H:%M:%S')
                             cursor.execute(
-                                f"""UPDATE dis_users SET time_afk = 0 WHERE id_discord = {member.id}"""
-                            )  # Обнуление счетчика афк
+                                f"""UPDATE dis_users SET next_notice = '{struct_time}' WHERE id_discord = {member.id}""")
                             conn.commit()
-                    except:
-                        pass
-                    # log_timer.write(f"{member.name} - Третья часть(Проверка на войс и сброс афк): {time.time() - t2}\n")
-                    t2 = time.time()
-                    m_roles = member.roles
-                    if nash_chel in m_roles:
-                        for role in trust_roles:
-                            if role in m_roles:
-                                await member.remove_roles(role)
-                    elif member_bd[3] > 4200:
-                        for role in [dont_bot, plebey]:
-                            if role in m_roles:
-                                await member.remove_roles(role)
-                        if civilian not in m_roles:
-                            await member.add_roles(civilian)
-                    elif (member_bd[3] > 600
-                          or int(member_bd[2]) > 350) and civilian not in m_roles:
+                            all_str = ""
+                            for i in working_hands.members:
+                                if i.id == 597161042367348736:
+                                    continue
+                                if moder in i.roles:
+                                    continue
+                                if organizer in i.roles:
+                                    continue
+                                if i.bot:
+                                    continue
+                                if admin in i.roles:
+                                    continue
+                                all_str += i.mention
+                            await working_hands.send(f"""❗ ***Уведомление*** ❗
 
-                        if dont_bot in m_roles:
-                            await member.remove_roles(dont_bot)
-                        if plebey not in m_roles:
-                            await member.add_roles(plebey)
-                    elif (member_bd[3] > 0
-                          or int(member_bd[2]) > 20) and civilian not in m_roles:
-                        if plebey not in m_roles:
-                            if dont_bot not in m_roles:
-                                await member.add_roles(dont_bot)
-                    await check_main_roles(member_bd, member)
-                    if dead in m_roles and member_bd[
-                        5] < 24000:  # Удаление роли трупа если число афк меньше недели
-                        member.remove_roles(dead)
-                    if member_bd[
-                        5] > 25440 and member.id not in admins:  # Если афк больше 424 часов кик
-                        try:
-                            await member.send(f'''Ещё не запылился?
+{member.name} **Не Проявлял** на сервере **Активность** около **1 Недели!**
+*Ваша обязанность: В течение этого дня поиграть с {member.name}*
+||{all_str}||""")
+                except Exception as exc:
+                    with open("./log_file.txt", "a+") as f:
+                        f.write(
+                            f"\n {datetime.datetime.now()} - Ошибка Таймер участников уведомление - {member.name} - {exc}\n")
+                        await exceptions.send(
+                            f"{datetime.datetime.now()} - Ошибка Таймер участников уведомление - {member.name} - {exc}")
+                if member_bd[1] == 0 and member_bd[5] > 4320:
+                    await guild.kick(user=member)
+                if admin in member.roles:
+                    if member.id not in admins:
+                        admins.append(member.id)
+                elif organizer in member.roles:
+                    if member.id not in admins:
+                        admins.append(member.id)
+                elif moder in member.roles:
+                    if member.id not in admins:
+                        admins.append(member.id)
+                elif senator in member.roles:
+                    if member.id not in admins:
+                        admins.append(member.id)
+                # print(member.name)
+                # print(member_bd[5])
+                if log_var2:
+                    log_timer.write(f"{member.name} - Первая часть: {time.time() - t2} - Роли: {member.roles}\n")
+                t2 = time.time()
+                cursor.execute(
+                    f"""UPDATE dis_users SET time_afk = {member_bd[5] + 0.166} WHERE id_discord = {member.id}""")
+                conn.commit()
+                if log_var2:
+                    log_timer.write(f"{member.name} - Вторая часть(Обновление в бд афк): {time.time() - t2}\n")
+                t2 = time.time()
+                try:
+                    # print(member.name)
+                    # print(member.voice)
+                    if member.voice is not None and member.voice.channel != pivo and member.voice.self_mute == False:  # Если участник в войсе и не в пивнушке
+                        cursor.execute(  # Счет времени в войсе
+                            f"""UPDATE dis_users SET time_on_voice = {member_bd[3] + 0.166} WHERE id_discord = {member.id}"""
+                        )
+                        struct_time = datetime.datetime.now()
+                        struct_time += datetime.timedelta(weeks=1) + datetime.timedelta(hours=3)
+                        struct_time = struct_time.strftime('%d/%m/%Y, %H:%M:%S')
+                        cursor.execute(
+                            f"""UPDATE dis_users SET next_notice = '{struct_time}' WHERE id_discord = {member.id}""")
+                        cursor.execute(
+                            f"""UPDATE dis_users SET time_afk = 0 WHERE id_discord = {member.id}"""
+                        )  # Обнуление счетчика афк
+                        conn.commit()
+                except Exception as exc:
+                    with open("./log_file.txt", "a+") as f:
+                        f.write(
+                            f"\n {datetime.datetime.now()} - Ошибка Таймер участников проверка войса - {member.name} - {exc}\n")
+                        await exceptions.send(
+                            f"{datetime.datetime.now()} - Ошибка Таймер участников проверка войса - {member.name} - {exc}")
+                if log_var2:
+                    log_timer.write(f"{member.name} - Третья часть(Проверка на войс и сброс афк): {time.time()-t2} - {member.voice}\n")
+                t2 = time.time()
+                m_roles = member.roles
+                if nash_chel in m_roles:
+                    for role in trust_roles:
+                        if role in m_roles:
+                            await member.remove_roles(role)
+                elif member_bd[3] > 4200:
+                    for role in [dont_bot, plebey]:
+                        if role in m_roles:
+                            await member.remove_roles(role)
+                    if civilian not in m_roles:
+                        await member.add_roles(civilian)
+                elif (member_bd[3] > 600
+                        or int(member_bd[2]) > 350) and civilian not in m_roles:
+                    if dont_bot in m_roles:
+                        await member.remove_roles(dont_bot)
+                    if plebey not in m_roles:
+                        await member.add_roles(plebey)
+                elif (member_bd[3] > 0
+                        or int(member_bd[2]) > 20) and civilian not in m_roles:
+                    if plebey not in m_roles:
+                        if dont_bot not in m_roles:
+                            await member.add_roles(dont_bot)
+                await check_main_roles(member_bd, member)
+                if dead in m_roles and member_bd[
+                    5] < 24000:  # Удаление роли трупа если число афк меньше недели
+                    member.remove_roles(dead)
+                if member_bd[
+                    5] > 25440 and member.id not in admins:  # Если афк больше 424 часов кик
+                    try:
+                        await member.send(f'''Ещё не запылился?
 Ты был **Исключён** из сервера " :banana: **Men of Cum - Redux** :milk:" за **Не активность** на **Сервере!**
 Если ты захочешь **Вернуться** к нам на **Сервер**, то советую поторопиться ...
 Все твои **Роли** скоро **Исчезнут**, да да...
 *У тебя Неделя, Дружок* :innocent:
 
-:arrow_right: {await general.create_invite(max_uses=1)} :arrow_left:'''
-                                              )  # !!!!!
-                        except:
-                            pass
+        :arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:''')  # !!!!!
+                    except Exception as exc:
+                        with open("./log_file.txt", "a+") as f:
+                            f.write(f"\n {datetime.datetime.now()} - Ошибка Таймер участников афк кик - {member.name} - {exc}\n")
+                            await exceptions.send(f"{datetime.datetime.now()} - Ошибка Таймер участников афк кик - {member.name} - {exc}")
+                    finally:
+                        await exceptions.send(
+                            f"{datetime.datetime.now()} - Кик участника за афк - {member.name}")
                         await guild.kick(user=member)
-                    elif member_bd[5] > 24000:  # Если афк больше 420 часов трупачек
-                        await member.add_roles(dead)
-                    # log_timer.write(
-                    #     f"{member.name} - Четвертая часть(Провека ролей): {time.time() - t2}\n")
-                    # log_timer.write(
-                    #     f"{member.name} - Всего: {time.time() - t3}\n")
-                except Exception as exc:
-                    with open("./log_file.txt", "a+") as f:
-                        f.write(f"\n {datetime.datetime.now()} - timer_members - {member.name} - {exc}\n")
-                    print(f"{datetime.datetime.now()} - timer_members - {member.name} - {exc}")
-
-
+                elif member_bd[5] > 24000:  # Если афк больше 420 часов трупачек
+                    await member.add_roles(dead)
+                if log_var2:
+                    log_timer.write(
+                        f"{member.name} - Четвертая часть(Провека ролей): {time.time() - t2}\n")
+                if log_var2:
+                    log_timer.write(
+                        f"{member.name} - Всего: {time.time() - t3}\n")
+                # except Exception as exc:
+                #     with open("./log_file.txt", "a+") as f:
+                #         f.write(f"\n {datetime.datetime.now()} - Ошибка Таймер участников - {member.name} - {exc}\n")
+                #     await exceptions.send(f"{datetime.datetime.now()} - Ошибка Таймер участников - {member.name} - {exc}")
             cursor.execute(
                 f"""SELECT * FROM dis_users WHERE time_after_leaving > 0 """
             )  # Обновление покинувших сервер
@@ -386,20 +388,28 @@ async def timer_halfmin():  # Таймер на каждую минуту
                         f"""DELETE FROM dis_users WHERE id_discord = {i[0]}""")
                 else:
                     cursor.execute(
-                        f"""UPDATE dis_users SET time_after_leaving = {i[6] + 0.166} WHERE id_discord = {i[0]}"""
-                    )
-            conn.commit()
+                        f"""UPDATE dis_users SET time_after_leaving = {i[6] + 0.166} WHERE id_discord = {i[0]}""")
 
+            conn.commit()
             diff = time.time() - t1
             print(diff)
-            log_timer.write(
-                f"{datetime.datetime.now()} - Задержка таймера: {diff}\n")
-            log_timer.close()
-            await asyncio.sleep(10 - diff)
+            if log_var2:
+                log_timer.write(
+                    f"\n\n{datetime.datetime.now()} - Задержка таймера: {diff}\n")
+                log_timer.close()
+                log_var2 = False
+                log_var = False
+            
+
+            if diff > 10:
+                await exceptions.send(f"{datetime.datetime.now()} - Время обработки превышено - {diff}")
         except Exception as exc:
             with open("./log_file.txt", "a+") as f:
-                f.write(f"\n {datetime.datetime.now()} - timer - {exc}\n")
-            print(f"{datetime.datetime.now()} - timer - {exc}")
+                f.write(f"\n {datetime.datetime.now()} - Ошибка Таймер - {exc}\n")
+            await exceptions.send(f"{datetime.datetime.now()} - Ошибка Таймер - {exc}")
+            subprocess.run(["systemctl", "restart", "runscript.service"])
+      
+
 """
 
 ------------------------EVENTS
@@ -409,57 +419,27 @@ async def timer_halfmin():  # Таймер на каждую минуту
 
 @client.event
 async def on_ready():
-    global conn
-    global cursor
-    global guild
+    
 
-    global who_im
-    global dont_bot
-    global plebey
-    global civilian
-    global nash_chel
+    global conn, cursor, guild, timer
 
-    global no_name
-    global chel
-    global zymerok
-    global lybitel
-    global worker
-    global zadrot
+    global who_im, dont_bot, plebey, civilian, nash_chel
 
-    global minor
-    global kozyrok
-    global churchill
-    global intellegence
-    global stalin
+    global no_name, zadrot, worker, lybitel, zymerok, chel
 
-    global hoi
-    global mow
+    global minor, kozyrok, churchill, intellegence, stalin
 
-    global senator
-    global admin
-    global organizer
-    global moder
+    global hoi, mow
+
+    global senator, admin, organizer, moder
 
     global dead
 
     global hands
 
-    global pivo
-    global tech_channels
-    global general
-    global main_roles
-    global trust_roles
-    global vip_roles
+    global pivo, tech_channels, general, working_hands, main_roles, trust_roles, vip_roles, exceptions
 
-    global agreement
-    global minor_mess
-    global kozyrok_mess
-    global churchill_mess
-    global intellegence_mess
-    global stalin_mess
-    global balance
-    global time_voice
-    global hands_mess
+    global agreement, minor_mess, kozyrok_mess, churchill_mess, intellegence_mess, stalin_mess, balance, time_voice, hands_mess
 
     global gaming_zone
 
@@ -505,10 +485,12 @@ async def on_ready():
     tech_channels.append(guild.get_channel(949293533028835408))  # news
     tech_channels.append(guild.get_channel(949296173506777140))  # update
     tech_channels.append(guild.get_channel(967711624108597318))  # shop
-    general = guild.get_channel(962035426644885565)
+    general = guild.get_channel(981970134384119819)
+    working_hands = guild.get_channel(980684109301051414)
     main_roles = [no_name, chel, zymerok, lybitel, worker, zadrot]
     trust_roles = [dont_bot, plebey, civilian]
     vip_roles = [minor, kozyrok, churchill, intellegence, stalin]
+    exceptions = guild.get_channel(981978051762061362)
 
     agreement = await guild.get_channel(948646836258865152).fetch_message(970952344122581012)
     minor_mess = await guild.get_channel(967711624108597318).fetch_message(968957147503296584)
@@ -521,6 +503,8 @@ async def on_ready():
     hands_mess = await guild.get_channel(967711624108597318).fetch_message(977482928365899816)
 
     gaming_zone = guild.get_channel(940667074638921771)
+
+    
 
     if not os.path.isfile("./mydatabase.db"):
         """
@@ -546,9 +530,12 @@ async def on_ready():
         for member in guild.members:
             if not member.bot:
                 try:
+                    struct_time = datetime.datetime.now()
+                    struct_time += datetime.timedelta(hours=3)
+                    struct_time = struct_time.strftime('%d/%m/%Y, %H:%M:%S')
                     cursor.execute(f"""INSERT INTO dis_users
-                                              VALUES ('{member.id}', '0', '0',
-                                              '0', '0', '0', '0', {time.time()})""")
+                                  VALUES ('{member.id}', '0', '0',
+                                  '0', '0', '0', '0', '{struct_time}', '{struct_time}'""")
                     conn.commit()
                 except:
                     pass
@@ -566,11 +553,11 @@ async def on_ready():
     t1 = time.time()
     result = time.gmtime(t1)
     try:
-        await guild.get_channel(967710989728497664).send(f"Перезапуск: {result.tm_mday}.{result.tm_mon}.{result.tm_year}")
+        await guild.get_channel(983112905098666074).send(f"Перезапуск: {result.tm_mday}.{result.tm_mon}.{result.tm_year}")
     except:
         pass
     print("ready")
-    await timer_halfmin()  # Обновление каждую минуту время в войсе и афк
+    timer = Timer()  # Обновление каждую минуту время в войсе и афк
 
 
 @client.event
@@ -587,7 +574,8 @@ async def on_raw_reaction_remove(reaction):
                 await user.remove_roles(mow)
     except Exception as exc:
         with open("./log_file.txt", "a+") as f:
-            f.write(f"\n {datetime.datetime.now()} - on_raw_reaction_remove - {reaction.user_id} - {exc}\n")
+            f.write(f"\n {datetime.datetime.now()} - Ошибка Удаление реакции - {reaction.user_id} - {exc}\n")
+        await exceptions.send(f"{datetime.datetime.now()} - Ошибка Удаление реакции - {reaction.user_id} - {exc}")
 
 
 @client.event
@@ -603,9 +591,11 @@ async def on_member_remove(member):
             f"""UPDATE dis_users SET time_after_leaving = 1 WHERE id_discord = {member.id}"""
         )
         conn.commit()
+        await exceptions.send(f"{datetime.datetime.now()} - Участника больше нет на сервере - {member.name} - id: {member.id}")
     except Exception as exc:
         with open("./log_file.txt", "a+") as f:
-            f.write(f"\n {datetime.datetime.now()} - on_member_remove - {member.id} - {exc}\n")
+            f.write(f"\n {datetime.datetime.now()} - Ошибка выход человека с сервера - {member.id} - {exc}\n")
+        await exceptions.send(f"{datetime.datetime.now()} - Ошибка выход человека с сервера - {member.id} - {exc}")
 
 
 @client.event
@@ -617,18 +607,19 @@ async def on_member_ban(guild, user):
         conn.commit()
     except Exception as exc:
         with open("./log_file.txt", "a+") as f:
-            f.write(f"\n {datetime.datetime.now()} - on_member_ban - {user.id} - {exc}\n")
+            f.write(f"\n {datetime.datetime.now()} - На бан - {user.id} -На бан - {user.id} - {exc}")
 
 
 @client.event
 async def on_member_join(member):  # Когда человек заходит на сервер
-
     try:
         if member.bot:  # Проверка на сообщение от пользователя
             return
-        days = datetime.datetime.now() - member.created_at
         struct_time = datetime.datetime.now()
+        days = struct_time - member.created_at
         struct_time += datetime.timedelta(hours=3)
+        struct_time2 = struct_time + datetime.timedelta(weeks=1)
+        struct_time2 = struct_time2.strftime('%d/%m/%Y, %H:%M:%S')
         struct_time = struct_time.strftime('%d/%m/%Y, %H:%M:%S')
         # print(struct_time)
         cursor.execute(
@@ -636,65 +627,76 @@ async def on_member_join(member):  # Когда человек заходит н
         if int(days.days) < 60:
             await guild.kick(member)
         elif cursor.fetchone() is None:  # Если человек не найден в бд
-            await member.add_roles(who_im)  # Добавление новичку роли Кто я?
-            cursor.execute(f"""INSERT INTO dis_users
-                                  VALUES ('{member.id}', '0', '0',
-                                  '0', '0', '0', '0', '{struct_time}')"""
-                           )  # нулевая роль это доверительная кто я
-            # print("insert")
-            conn.commit()  # Сохранение изменений в бд
+            try:
+                await member.add_roles(who_im)  # Добавление новичку роли Кто я?
+                cursor.execute(f"""INSERT INTO dis_users
+                                      VALUES ('{member.id}', '0', '0',
+                                      '0', '0', '0', '0', '{struct_time}', '{struct_time2}')"""
+                               )  # нулевая роль это доверительная кто я
+                conn.commit()
+                # await exceptions.send(f"{datetime.datetime.now()} - Заход на сервер - {member.name} - Аккаунт создан: {member.created_at}")
+                # print("insert")
+            except Exception as exc:
+                with open("./log_file.txt", "a+") as f:
+                    f.write(f"\n {datetime.datetime.now()} - Ошибка заход новичка на сервер - {member.name} - {exc}\n")
+                await exceptions.send(
+                    f"{datetime.datetime.now()} - Ошибка заход новичка на сервер - {member.name} - {exc}")
 
         else:  # Если человек найден в бд
-            cursor.execute(f"""UPDATE dis_users SET time_after_leaving 
-            = 0 WHERE id_discord = {member.id}""")  # Обнуление времени после ухода
-            # cursor.execute(f"""UPDATE dis_users SET num_mess
-            #         = 0 WHERE id_discord = {member.id}""")
-            # cursor.execute(f"""UPDATE dis_users SET time_on_voice
-            #                 = 61 WHERE id_discord = {member.id}""")
-            conn.commit()
-            cursor.execute(
-                f"""SELECT * FROM dis_users WHERE id_discord = {member.id} """)
-            member_bd2 = cursor.fetchone()
-            if member_bd2[3] > 4200 and (dont_bot and plebey
-                                         and nash_chel) not in member.roles:
-                for role in trust_roles:
-                    if role in member.roles:
-                        await member.remove_roles(role)
-                await member.add_roles(civilian)
-            elif member_bd2[3] > 600 or member_bd2[2] > 350 and (
-                    dont_bot and civilian and nash_chel) not in member.roles:
-                for role in trust_roles:
-                    if role in member.roles:
-                        await member.remove_roles(role)
-                await member.add_roles(plebey)
-            elif (member_bd2[3] >= 0
-                  or member_bd2[2] > 20) and (civilian and plebey
-                                              and nash_chel) not in member.roles:
-                await member.add_roles(dont_bot)
-            # print("Вторая часть: ", time.time() - t2)
-            await check_main_roles(member_bd2, member)
-            # print(member_bd2[1]
-            if member_bd2[1] == 2:  # Проверка из базы данных на роль
-                await member.add_roles(minor)
-            elif member_bd2[1] == 3:  # Проверка из базы данных на роль
-                await member.add_roles(kozyrok)
-            elif member_bd2[1] == 4:  # Проверка из базы данных на роль
-                await member.add_roles(churchill)
-            elif member_bd2[1] == 5:  # Проверка из базы данных на роль
-                await member.add_roles(intellegence)
-            elif member_bd2[1] == 6:  # Проверка из базы данных на роль
-                await member.add_roles(stalin)
-            await member.send('''О, всё таки вернулся) :kissing_heart:
+            try:
+                cursor.execute(f"""UPDATE dis_users SET time_after_leaving 
+                = 0, time_afk = 0 WHERE id_discord = {member.id}""")  # Обнуление времени после ухода
+                # cursor.execute(f"""UPDATE dis_users SET num_mess
+                #         = 0 WHERE id_discord = {member.id}""")
+                # cursor.execute(f"""UPDATE dis_users SET time_on_voice
+                #                 = 61 WHERE id_discord = {member.id}""")
+                conn.commit()
+                cursor.execute(
+                    f"""SELECT * FROM dis_users WHERE id_discord = {member.id} """)
+                member_bd2 = cursor.fetchone()
+                if int(member_bd2[3]) > 4200 and (dont_bot and plebey
+                                             and nash_chel) not in member.roles:
+                    for role in trust_roles:
+                        if role in member.roles:
+                            await member.remove_roles(role)
+                    await member.add_roles(civilian)
+                elif int(member_bd2[3]) > 600 or int(member_bd2[2]) > 350 and (
+                        dont_bot and civilian and nash_chel) not in member.roles:
+                    for role in trust_roles:
+                        if role in member.roles:
+                            await member.remove_roles(role)
+                    await member.add_roles(plebey)
+                elif (int(member_bd2[3]) >= 0
+
+                                                  and nash_chel) not in member.roles:
+                    await member.add_roles(dont_bot)
+                # print("Вторая часть: ", time.time() - t2)
+                await check_main_roles(member_bd2, member)
+                # print(member_bd2[1]
+                if member_bd2[1] == 2:  # Проверка из базы данных на роль
+                    await member.add_roles(minor)
+                elif member_bd2[1] == 3:  # Проверка из базы данных на роль
+                    await member.add_roles(kozyrok)
+                elif member_bd2[1] == 4:  # Проверка из базы данных на роль
+                    await member.add_roles(churchill)
+                elif member_bd2[1] == 5:  # Проверка из базы данных на роль
+                    await member.add_roles(intellegence)
+                elif member_bd2[1] == 6:  # Проверка из базы данных на роль
+                    await member.add_roles(stalin)
+                await member.send('''О, всё таки вернулся) :kissing_heart:
 Значит не зря тебе напомнил.
 **Все** твои **Роли Восстановлены** в полном составе.
 И это, **Больше** чтобы такого **Не Было**.
 *Это был последний раз, Дружок*''')  # Бот пишет в лс  !!!!!!!
-
+            except Exception as exc:
+                with open("./log_file.txt", "a+") as f:
+                    f.write(f"\n {datetime.datetime.now()} - Ошибка заход бывшего участника на сервер - {member.name} - {exc}\n")
+                await exceptions.send(
+                    f"{datetime.datetime.now()} - Ошибка заход новичка на сервер - {member.name} - {exc}")
     except Exception as exc:
         with open("./log_file.txt", "a+") as f:
-            f.write(f"\n {datetime.datetime.now()} - on_member_join - {member.name} - {exc}\n")
-        print(f"\n {datetime.datetime.now()} - on_member_join - {member.name} - {exc}\n")
-
+            f.write(f"\n {datetime.datetime.now()} - Ошибка заход человека на сервер - {member.name} - {exc}\n")
+        await exceptions.send(f"{datetime.datetime.now()} - Ошибка заход человека на сервер - {member.name} - {exc}")
 
 
 @client.event
@@ -713,13 +715,13 @@ async def on_raw_reaction_add(reaction):
                 if hands in reaction.member.roles:
                     await reaction.member.send(
                         '''Ты не устал **Жмакать **на **Кнопочку**?
-    Заебал, прекращай.''')  # !!!!!!!
+Заебал, прекращай.''')  # !!!!!!!
                 elif member_reaction[3] > 420:
                     await reaction.member.send(
                         f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-    Была куплена Роль - "{hands.name}"
-    Данная роль имеется у **{len(hands.members)}** чел.
-    :sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
+Была куплена Роль - "{hands.name}"
+Данная роль имеется у **{len(hands.members)}** чел.
+:sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
                     )  # !!!!!
                     await reaction.member.add_roles(hands)
                     cursor.execute(f"""UPDATE dis_users SET time_on_voice 
@@ -735,11 +737,11 @@ async def on_raw_reaction_add(reaction):
                 else:
                     """{member_bd"""
                     await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-    Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
-    Чтобы их **Восполнить**, нужно **Зайти**...
-    :arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
-    
-    :gift_heart: **Приятной Вам Игры!** :cupid:''')
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
+Чтобы их **Восполнить**, нужно **Зайти**...
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
+
+:gift_heart: **Приятной Вам Игры!** :cupid:''')
         # print(reaction.emoji)
         elif reaction.message_id == 974989390755532800:
             if str(reaction.emoji) == "1️⃣":
@@ -788,8 +790,8 @@ async def on_raw_reaction_add(reaction):
                 await balance.remove_reaction("💰", reaction.member)
                 await reaction.member.send(
                     f'''Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
-    Чтобы их **Восполнить**, нужно **Зайти**...
-    :arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:''')
+Чтобы их **Восполнить**, нужно **Зайти**...
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:''')
 
         elif reaction.message_id == 970952344122581012:
             if str(reaction.emoji) == "✅":
@@ -818,15 +820,15 @@ async def on_raw_reaction_add(reaction):
             if minor in reaction.member.roles:
                 await reaction.member.send(
                     '''Ты не устал **Жмакать **на **Кнопочку**?
-    Заебал, прекращай.''')  # !!!!!!!
+Заебал, прекращай.''')  # !!!!!!!
             elif member_reaction[3] > 15000:
                 for role in vip_roles:
                     await reaction.member.remove_roles(role)
                 await reaction.member.send(
                     f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-    Была куплена Роль - "{minor.name}"
-    Данная роль имеется у **{len(minor.members)}** чел.
-    :sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
+Была куплена Роль - "{minor.name}"
+Данная роль имеется у **{len(minor.members)}** чел.
+:sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
                 )  # !!!!!
                 await reaction.member.add_roles(minor)
                 cursor.execute(f"""UPDATE dis_users SET role 
@@ -849,9 +851,9 @@ async def on_raw_reaction_add(reaction):
             else:
                 """{member_bd"""
                 await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-    Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
-    Чтобы их **Восполнить**, нужно **Зайти**...
-    :arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
+Чтобы их **Восполнить**, нужно **Зайти**...
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
     
     :gift_heart: **Приятной Вам Игры!** :cupid:''')  # !!!!!!!
         elif reaction.message_id == 968957358640341022 and str(
@@ -864,15 +866,15 @@ async def on_raw_reaction_add(reaction):
             if kozyrok in reaction.member.roles:
                 await reaction.member.send(
                     '''Ты не устал **Жмакать **на **Кнопочку**?
-    Заебал, прекращай.''')
+Заебал, прекращай.''')
             elif member_reaction[3] > 18000:
                 for role in vip_roles:
                     await reaction.member.remove_roles(role)
                 await reaction.member.send(
                     f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-    Была куплена Роль - "{kozyrok.name}"
-    Данная роль имеется у **{len(kozyrok.members)}** чел.
-    :sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
+Была куплена Роль - "{kozyrok.name}"
+Данная роль имеется у **{len(kozyrok.members)}** чел.
+:sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
                 )
                 await reaction.member.add_roles(kozyrok)
                 cursor.execute(f"""UPDATE dis_users SET role 
@@ -893,11 +895,11 @@ async def on_raw_reaction_add(reaction):
                 await check_main_roles(member_reaction, reaction.member)
             else:
                 await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-    Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
-    Чтобы их **Восполнить**, нужно **Зайти**...
-    :arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
+Чтобы их **Восполнить**, нужно **Зайти**...
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
     
-    :gift_heart: **Приятной Вам Игры!** :cupid:''')
+:gift_heart: **Приятной Вам Игры!** :cupid:''')
         elif reaction.message_id == 968957518715973762 and str(
                 reaction.emoji) == "💵":  # Эх... Черчилль III, да...
             await churchill_mess.remove_reaction("💵", reaction.member)
@@ -908,15 +910,15 @@ async def on_raw_reaction_add(reaction):
             if churchill in reaction.member.roles:
                 await reaction.member.send(
                     '''Ты не устал **Жмакать **на **Кнопочку**?
-    Заебал, прекращай.''')
+Заебал, прекращай.''')
             elif member_reaction[3] > 18000:
                 for role in vip_roles:
                     await reaction.member.remove_roles(role)
                 await reaction.member.send(
                     f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-    Была куплена Роль - "{churchill.name}"
-    Данная роль имеется у **{len(churchill.members)}** чел.
-    :sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
+Была куплена Роль - "{churchill.name}"
+Данная роль имеется у **{len(churchill.members)}** чел.
+:sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
                 )
                 await reaction.member.add_roles(churchill)
                 cursor.execute(f"""UPDATE dis_users SET role 
@@ -937,9 +939,9 @@ async def on_raw_reaction_add(reaction):
                 await check_main_roles(member_reaction, reaction.member)
             else:
                 await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-    Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
-    Чтобы их **Восполнить**, нужно **Зайти**...
-    :arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
+Чтобы их **Восполнить**, нужно **Зайти**...
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
     
     :gift_heart: **Приятной Вам Игры!** :cupid:''')
         elif reaction.message_id == 968957651822182410 and str(
@@ -952,15 +954,15 @@ async def on_raw_reaction_add(reaction):
             if intellegence in reaction.member.roles:
                 await reaction.member.send(
                     '''Ты не устал **Жмакать **на **Кнопочку**?
-    Заебал, прекращай.''')
+Заебал, прекращай.''')
             elif member_reaction[3] > 24000:
                 for role in vip_roles:
                     await reaction.member.remove_roles(role)
                 await reaction.member.send(
                     f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-    Была куплена Роль - "{intellegence.name}"
-    Данная роль имеется у **{len(intellegence.members)}** чел.
-    :sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
+Была куплена Роль - "{intellegence.name}"
+Данная роль имеется у **{len(intellegence.members)}** чел.
+:sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
                 )
                 await reaction.member.add_roles(intellegence)
                 cursor.execute(f"""UPDATE dis_users SET role 
@@ -981,11 +983,11 @@ async def on_raw_reaction_add(reaction):
                 await check_main_roles(member_reaction, reaction.member)
             else:
                 await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-    Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
-    Чтобы их **Восполнить**, нужно **Зайти**...
-    :arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
+Чтобы их **Восполнить**, нужно **Зайти**...
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
     
-    :gift_heart: **Приятной Вам Игры!** :cupid:''')
+:gift_heart: **Приятной Вам Игры!** :cupid:''')
         elif reaction.message_id == 968957729458765914 and str(
                 reaction.emoji) == "💵":  # Шиза Сталина
             await stalin_mess.remove_reaction("💵", reaction.member)
@@ -996,15 +998,15 @@ async def on_raw_reaction_add(reaction):
             if stalin in reaction.member.roles:
                 await reaction.member.send(
                     '''Ты не устал **Жмакать **на **Кнопочку**?
-    Заебал, прекращай.''')
+Заебал, прекращай.''')
             elif member_reaction[3] > 36000:
                 for role in vip_roles:
                     await reaction.member.remove_roles(role)
                 await reaction.member.send(
                     f''':shopping_bags: **Поздравляю Тебя с Покупкой!** :shopping_bags:
-    Была куплена Роль - "{stalin.name}"
-    Данная роль имеется у **{len(stalin.members)}** чел.
-    :sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
+Была куплена Роль - "{stalin.name}"
+Данная роль имеется у **{len(stalin.members)}** чел.
+:sparkling_heart: **Вы** всегда будете **Нашим** желанным **Покупателем!** :cupid:'''
                 )
                 await reaction.member.add_roles(stalin)
                 cursor.execute(f"""UPDATE dis_users SET role 
@@ -1025,11 +1027,11 @@ async def on_raw_reaction_add(reaction):
                 await check_main_roles(member_reaction, reaction.member)
             else:
                 await reaction.member.send(f'''**У Вас Не Достаточно Средств!**
-    Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
-    Чтобы их **Восполнить**, нужно **Зайти**...
-    :arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
-    
-    :gift_heart: **Приятной Вам Игры!** :cupid:''')
+Ваш Баланс : {int(member_reaction[3] / 60)} ч. и {int(member_reaction[2])} сообщ.
+Чтобы их **Восполнить**, нужно **Зайти**...
+:arrow_right: {await general.create_invite(max_age=1800, max_uses=1)} :arrow_left:
+
+:gift_heart: **Приятной Вам Игры!** :cupid:''')
 
         elif reaction.message_id == 970951993252278344 and str(
                 reaction.emoji) == "<:HeartsofIronIV:953363622501969960>":  # HOI
@@ -1041,8 +1043,8 @@ async def on_raw_reaction_add(reaction):
                 await reaction.member.add_roles(mow)
     except Exception as exc:
         with open("./log_file.txt", "a+") as f:
-            f.write(f"\n {datetime.datetime.now()} - on_raw_reaction_add - {reaction.user_id} - {reaction.message_id} - {exc}\n")
-
+            f.write(f"\n {datetime.datetime.now()} - Ошибка Добавление реакции - {reaction.user_id} - {reaction.message_id} - {exc}\n")
+        await exceptions.send(f"{datetime.datetime.now()} - Ошибка Добавление реакции - {reaction.user_id} - {reaction.message_id} - {exc}")
     # if reaction.message_id == 966746342800113676 and str(reaction.emoji) == "✅":  # Баланс
     #     cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {reaction.member_id}""")
     #     balance = cursor.fetchone()
@@ -1056,8 +1058,10 @@ async def on_message(message):
             return
         # if message.author.id in admins:
         #     return
-        if message.channel.id == 967710989728497664:  # Канал для комманд боту
+        if message.channel.id == 983112905098666074:  # Канал для комманд боту
+
             await client.process_commands(message)
+
         if str(
                 message.channel.type
         ) != "private" and message.channel not in tech_channels:  # Проверка не на лс и не тех
@@ -1071,25 +1075,26 @@ async def on_message(message):
                     await message.delete()
                     await message.author.ban()
                     await message.channel.send(
-                        f"Слизь со стены - {message.author.name} отлетела в помоечку."
-                    )
+                        f"Слизь со стены - {message.author.name} отлетела в помоечку.")
+                    await exceptions.send(
+                        f"{datetime.datetime.now()} - ban_for_link - {message.author.name} - Отлетел в помойку")
                 links_warn.append(message.author.id)
                 await message.delete()
                 await message.channel.send(
-                    f"О, животное - {message.author.name} в чате пытается рекламировать свою хуету."
-                )
+                    f"О, животное - {message.author.name} в чате пытается рекламировать свою хуету.")
+                await exceptions.send(
+                    f"{datetime.datetime.now()} - link - {message.author.name} - Животное рекламирует хуету")
             if len(str(message.content)) > 500 and message.channel.id != 967710989728497664:  # Если больше 400 сим удаление
                 await message.delete()
             else:
                 if not flag:
                     await timer_messages(5)
-
         elif message.author.id == 869217405862305822 or message.author.id == 597161042367348736:
             await client.process_commands(message)
     except Exception as exc:
         with open("./log_file.txt", "a+") as f:
-            f.write(f"\n {datetime.datetime.now()} - on_message - {message.author.id} - {message.content} - {exc}\n")
-
+            f.write(f"\n {datetime.datetime.now()} - Ошибка Сообщение - {message.author.id} - {message.content} - {exc}\n")
+        await exceptions.send(f"{datetime.datetime.now()} - Ошибка Сообщение - {message.author.id} - {message.content} - {exc}")
 """
 
 ----------------------COMMANDS
@@ -1117,11 +1122,10 @@ async def add_to_time(ctx, arg, arg2):
         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
         bd = cursor.fetchone()
         user = await guild.fetch_member(arg)
-        cursor.execute(f"""UPDATE dis_users SET time_on_voice = {int(arg2) + (bd[3] * 60)} WHERE id_discord = {arg}""")
+        cursor.execute(f"""UPDATE dis_users SET time_on_voice = {(int(arg2) * 60) + bd[3]} WHERE id_discord = {arg}""")
         conn.commit()
         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
         bd = cursor.fetchone()
-
         await ctx.send(f"У участника {user.name} в базе данных {round(bd[3] / 60)} ч.")
     except Exception as exc:
         await ctx.send(f"Произошла ошибка {exc}")
@@ -1163,18 +1167,19 @@ async def get_info(ctx, arg):
         user = await guild.fetch_member(arg)
         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
         bd = cursor.fetchone()
-        await ctx.send(f"""Информация об участнике {user.name}:
+        await ctx.send(f"""Информация об участнике **{user.name}**:
 ID:  {bd[0]}
-Role:  {bd[1]}
-Number_messages:  {bd[2]}
-Time_on_voice:  {int(bd[3])} мин. = {int(bd[3]) / 60} ч.
-Warnings:  {bd[4]}
-Time_afk:  {int(bd[5])} мин. = {int(bd[5]) / 60} ч.
-Time_after_leaving:  {int(bd[6])}
-Time_join: {bd[7]}
-Time_created_account: {user.created_at}""")
+ID Роли:  {bd[1]}
+Число сообщений:  {bd[2]}
+Время в войсе:  {int(bd[3])} мин. = {int(bd[3]) / 60} ч.
+Предупреждений:  {bd[4]}
+Время афк:  {int(bd[5])} мин. = {int(bd[5]) / 60} ч.
+Время после выхода:  {int(bd[6])}
+Время захода: {bd[7]}
+Время создания аккаунта: {user.created_at}
+Время след. уведомления: {bd[8]}""")
     except Exception as exc:
-        await ctx.send("Произошла ошибка")
+        await ctx.send(f"Произошла ошибка - {exc}")
         with open("./log_file.txt", "a+") as f:
             f.write(f"\n {datetime.datetime.now()} - {exc}\n")
 
@@ -1194,7 +1199,7 @@ async def select(ctx, arg):
     try:
         cursor.execute(f"""{arg}""")
         bd = cursor.fetchall()
-        await ctx.send(f"""{len(bd)}""")
+        await ctx.send(f"""{bd}""")
     except Exception as exc:
         await ctx.send(f"Произошла ошибка {exc}")
 
@@ -1257,114 +1262,26 @@ async def check_timer(ctx):
         await ctx.send(diff)
     except Exception as exc:
         await ctx.send(f"Произошла ошибка {exc}")
-'''
-@client.command()
-async def help(ctx):  # Команда help_me Выводит доступные команды
-
-    await ctx.send("$get_info_voice id  - Сколько участник сидел в голосовом чате (id человека)\n"
-                   "\n$get_info_messages id  - Сколько участник писал в текстовом чате (id человека)\n"
-                   "\n$get_info_warnings id  - Сколько у участника предупреждений (id человека)")
 
 
-# @client.command()
-# async def add_r(ctx, id):  # Команда add_r Добавляет реакции
-#     welcome = client.get_channel(949728092253999195)
-#     mess = await welcome.fetch_message(id)
-#     for i in ["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣"]:
-#         await mess.add_reaction(i)
-
-
-
-
-@client.command()
-async def get_info_voice(ctx, arg):  # Команда get_info_voice Выводит время в голосовых чатах
-    global cursor
+@client.command(pass_context=True)
+async def give_log(ctx):
+    global log_var
     try:
-        cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
-
-        user = guild.get_member(int(arg))
-        num = cursor.fetchone()
-
-        if num[3] > 60:
-            await ctx.send(f"{user.name} сидел в голосовом чате {num[3] // 60} ч. {num[3] % 60} м.")
-        else:
-            await ctx.send(f"{user.name} сидел в голосовом чате {num[3]} м.")
-    except:
-        await ctx.send("Произошла ошибка")
-
+        log_var = True
+        while True:
+            if log_var == False:
+                await ctx.send('Готово!', file=discord.File("log_timer.txt"))
+                break
+            await ctx.send(log_var)
+            await asyncio.sleep(10)
+    except Exception as exc:
+        await ctx.send(f"Произошла ошибка {exc}")
 
 @client.command()
-async def get_info_messages(ctx, arg):  # Команда get_info_messages Выводит число сообщений за все время
-    global cursor
-    try:
-        cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
-        user = guild.get_member(int(arg))
-        num = cursor.fetchone()
-        await ctx.send(f"{user.name} написал {num[2]} сообщ.")
+async def restart(ctx):
+    subprocess.run(["systemctl", "restart", "runscript.service"])
 
-    except:
-        await ctx.send("Произошла ошибка")
-
-
-# @client.command()
-# async def get_info_warnings(ctx, arg):  # Команда get_info_warnings Выводит число предупреждений
-#     global cursor
-#     try:
-#         cursor.execute(f"""SELECT * FROM dis_users WHERE id_discord = {arg}""")
-#         user = guild.get_member(int(arg))
-#         num = cursor.fetchone()
-#         await ctx.send(f"{user.name} получил {num[4]} предупр.")
-#     except:
-#         await ctx.send("Произошла ошибка")
-
-
-# @client.command()
-# async def button(ctx):
-#     await ctx.send(
-#         "Hello, World!",
-#         components = [
-#             Button(label = "1", custom_id = "button1"),
-#             Button(label="2!", custom_id="button2"),
-#
-#         ],
-#     )
-#
-#     while True:
-#         msg = await client.wait_for("button_click")
-#         if msg.custom_id == "button1":
-#             await msg.send(content = 'Нажата кнопка 1 и ты получаешь нихуя')
-#
-#         if msg.custom_id == "button2":
-#             await msg.send(content = 'Нажата кнопка 2 и ты получаешь приз',
-#                            )
-
-#         if msg.custom_id == "button3":
-#             await msg.send(content=':flag_ua: ')
-#
-# @client.command()
-# async def select(ctx):
-#     await ctx.send(
-#         "Hello, World!",
-#         components = [
-#             Select(
-#                 placeholder = "Select something!",
-#                 options = [
-#                     SelectOption(label = "A", value = "A"),
-#                     SelectOption(label = "B", value = "B")
-#                 ]
-#             )
-#         ]
-#     )
-#
-#     interaction = await client.wait_for("select_option")
-#     await interaction.send(content = f"{interaction.values[0]} selected!")
-'''
-""" 
-
-
------RUN-----
-
-"""
 
 if __name__ == '__main__':
-    client.run("OTcyNzczNDA5MjYyMDQzMTc3.GSRzVK.IYKnq_XP7PMdddLB8fJ09PhC7jgNOCDbVUA2Uc")
+    client.run("")
